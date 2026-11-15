@@ -4,13 +4,9 @@ import type { SignIn } from '../application/sign-in'
 import type { VerifyOneTimeCode } from '../application/verify-one-time-code'
 import type { Session, SignInChallenge } from '../domain/authentication'
 import { OneTimeCodeForm } from './OneTimeCodeForm'
-import { SignedIn } from './SignedIn'
 import { SignInForm } from './SignInForm'
 
-type Step =
-  | { name: 'credentials' }
-  | { name: 'verification'; challenge: SignInChallenge }
-  | { name: 'signed-in'; session: Session }
+type Step = { name: 'credentials' } | { name: 'verification'; challenge: SignInChallenge }
 
 /** Which way the flow moved, so the entering screen slides in from the matching side. */
 type Direction = 'forward' | 'back'
@@ -27,6 +23,8 @@ interface SignInFlowProps {
   verifyOneTimeCode: VerifyOneTimeCode
   resendOneTimeCode: ResendOneTimeCode
   resendCooldownSeconds?: number
+  /** Called once the one-time code is confirmed; the flow's job ends here. */
+  onSignedIn: (session: Session) => void
 }
 
 export function SignInFlow({
@@ -34,6 +32,7 @@ export function SignInFlow({
   verifyOneTimeCode,
   resendOneTimeCode,
   resendCooldownSeconds = DEFAULT_RESEND_COOLDOWN_SECONDS,
+  onSignedIn,
 }: SignInFlowProps) {
   const [step, setStep] = useState<Step>({ name: 'credentials' })
   const [direction, setDirection] = useState<Direction>('forward')
@@ -57,12 +56,9 @@ export function SignInFlow({
           verifyOneTimeCode={verifyOneTimeCode}
           resendOneTimeCode={resendOneTimeCode}
           resendCooldownSeconds={resendCooldownSeconds}
-          onVerified={(session) => goTo({ name: 'signed-in', session }, 'forward')}
+          onVerified={onSignedIn}
           onChangeEmail={() => goTo({ name: 'credentials' }, 'back')}
         />
-      )}
-      {step.name === 'signed-in' && (
-        <SignedIn session={step.session} onSignOut={() => goTo({ name: 'credentials' }, 'back')} />
       )}
     </div>
   )
