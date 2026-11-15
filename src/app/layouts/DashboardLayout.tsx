@@ -3,6 +3,8 @@ import { useState } from 'react'
 import { Link, Outlet } from 'react-router'
 import { useSession } from '@/features/auth/ui/useSession'
 import { ThemeToggle } from '@/features/theme/ui/ThemeToggle'
+import { LocaleSwitcher } from '@/shared/i18n/LocaleSwitcher'
+import { useI18n } from '@/shared/i18n/useI18n'
 import { cn } from '@/shared/lib/utils'
 import { Button } from '@/shared/ui/button'
 import { BrandMark } from '../components/BrandMark'
@@ -18,11 +20,12 @@ const sideMenuId = 'side-menu'
 
 /**
  * Full-width frame for signed-in pages: the side menu on the left, a header with
- * the theme switch, who is signed in and a way out. On narrow screens the side
+ * the language and theme switches, who is signed in and a way out. On narrow screens the side
  * menu slides over the page from the header's menu button.
  */
 export function DashboardLayout({ menu }: DashboardLayoutProps) {
   const { session, endSession } = useSession()
+  const { t } = useI18n()
   const [menuOpen, setMenuOpen] = useState(false)
   const closeMenu = () => setMenuOpen(false)
 
@@ -43,7 +46,7 @@ export function DashboardLayout({ menu }: DashboardLayoutProps) {
             type="button"
             variant="ghost"
             size="icon-sm"
-            aria-label="Close menu"
+            aria-label={t('layout.closeMenu')}
             onClick={closeMenu}
             className="text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-active lg:hidden"
           >
@@ -64,7 +67,7 @@ export function DashboardLayout({ menu }: DashboardLayoutProps) {
               type="button"
               variant="ghost"
               size="icon"
-              aria-label="Open menu"
+              aria-label={t('layout.openMenu')}
               aria-controls={sideMenuId}
               aria-expanded={menuOpen}
               onClick={() => setMenuOpen(true)}
@@ -76,10 +79,11 @@ export function DashboardLayout({ menu }: DashboardLayoutProps) {
               {session && (
                 <span className="hidden truncate text-sm text-muted-foreground sm:inline">{session.email}</span>
               )}
+              <LocaleSwitcher />
               <ThemeToggle />
               <Button type="button" variant="outline" size="sm" onClick={endSession}>
                 <LogOutIcon aria-hidden />
-                Sign out
+                {t('layout.signOut')}
               </Button>
             </div>
           </div>

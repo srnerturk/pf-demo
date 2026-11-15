@@ -1,6 +1,7 @@
 import { render, screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { afterEach, describe, expect, it, vi } from 'vitest'
+import { TestI18nProvider } from '@/test/i18n'
 import type { ThemePreferenceStore } from '../application/theme-preference-store'
 import type { Theme } from '../domain/theme'
 import { ThemeProvider } from './ThemeProvider'
@@ -26,9 +27,11 @@ class FakeThemePreferenceStore implements ThemePreferenceStore {
 function renderToggle({ store = new FakeThemePreferenceStore(), systemPrefersDark = false } = {}) {
   const user = userEvent.setup()
   render(
-    <ThemeProvider store={store} systemPrefersDark={systemPrefersDark}>
-      <ThemeToggle />
-    </ThemeProvider>,
+    <TestI18nProvider>
+      <ThemeProvider store={store} systemPrefersDark={systemPrefersDark}>
+        <ThemeToggle />
+      </ThemeProvider>
+    </TestI18nProvider>,
   )
   return { user, store }
 }
@@ -44,7 +47,7 @@ describe('ThemeToggle', () => {
     renderToggle({ store: new FakeThemePreferenceStore('dark') })
 
     expect(root()).toHaveClass('dark')
-    expect(screen.getByRole('button', { name: 'Switch to light theme' })).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'Açık temaya geç' })).toBeInTheDocument()
   })
 
   it('follows the system preference until the person chooses', () => {
@@ -57,11 +60,11 @@ describe('ThemeToggle', () => {
     const { user, store } = renderToggle()
     expect(root()).not.toHaveClass('dark')
 
-    await user.click(screen.getByRole('button', { name: 'Switch to dark theme' }))
+    await user.click(screen.getByRole('button', { name: 'Koyu temaya geç' }))
     expect(root()).toHaveClass('dark')
     expect(store.stored).toBe('dark')
 
-    await user.click(screen.getByRole('button', { name: 'Switch to light theme' }))
+    await user.click(screen.getByRole('button', { name: 'Açık temaya geç' }))
     expect(root()).not.toHaveClass('dark')
     expect(store.stored).toBe('light')
   })
