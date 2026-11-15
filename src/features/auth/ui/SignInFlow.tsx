@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import type { RequestCaptcha } from '../application/request-captcha'
 import type { ResendOneTimeCode } from '../application/resend-one-time-code'
 import type { SignIn } from '../application/sign-in'
 import type { VerifyOneTimeCode } from '../application/verify-one-time-code'
@@ -20,6 +21,7 @@ const DEFAULT_RESEND_COOLDOWN_SECONDS = 30
 
 interface SignInFlowProps {
   signIn: SignIn
+  requestCaptcha: RequestCaptcha
   verifyOneTimeCode: VerifyOneTimeCode
   resendOneTimeCode: ResendOneTimeCode
   resendCooldownSeconds?: number
@@ -29,6 +31,7 @@ interface SignInFlowProps {
 
 export function SignInFlow({
   signIn,
+  requestCaptcha,
   verifyOneTimeCode,
   resendOneTimeCode,
   resendCooldownSeconds = DEFAULT_RESEND_COOLDOWN_SECONDS,
@@ -47,6 +50,7 @@ export function SignInFlow({
       {step.name === 'credentials' && (
         <SignInForm
           signIn={signIn}
+          requestCaptcha={requestCaptcha}
           onChallengeIssued={(challenge) => goTo({ name: 'verification', challenge }, 'forward')}
         />
       )}

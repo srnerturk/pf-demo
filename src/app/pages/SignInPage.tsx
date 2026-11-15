@@ -1,4 +1,5 @@
 import { InfoIcon } from 'lucide-react'
+import type { RequestCaptcha } from '@/features/auth/application/request-captcha'
 import type { ResendOneTimeCode } from '@/features/auth/application/resend-one-time-code'
 import type { SignIn } from '@/features/auth/application/sign-in'
 import type { VerifyOneTimeCode } from '@/features/auth/application/verify-one-time-code'
@@ -9,12 +10,13 @@ import { BrandMark } from '../components/BrandMark'
 
 export interface SignInPageProps {
   signIn: SignIn
+  requestCaptcha: RequestCaptcha
   verifyOneTimeCode: VerifyOneTimeCode
   resendOneTimeCode: ResendOneTimeCode
   footnote?: string
 }
 
-export function SignInPage({ signIn, verifyOneTimeCode, resendOneTimeCode, footnote }: SignInPageProps) {
+export function SignInPage({ signIn, requestCaptcha, verifyOneTimeCode, resendOneTimeCode, footnote }: SignInPageProps) {
   const { startSession } = useSession()
 
   return (
@@ -30,6 +32,7 @@ export function SignInPage({ signIn, verifyOneTimeCode, resendOneTimeCode, footn
         <CardContent className="p-6 sm:p-10">
           <SignInFlow
             signIn={signIn}
+            requestCaptcha={requestCaptcha}
             verifyOneTimeCode={verifyOneTimeCode}
             resendOneTimeCode={resendOneTimeCode}
             onSignedIn={startSession}

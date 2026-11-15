@@ -1,15 +1,23 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { CredentialsRejectedError } from '../application/sign-in'
 import { OneTimeCodeRejectedError } from '../application/verify-one-time-code'
+import type { SignInAttempt } from '../domain/authentication'
 import { InMemoryAuthenticator } from './in-memory-authenticator'
 
 const account = { email: 'ada@example.com', password: 'password123', oneTimeCode: '123456' }
+
+/** The in-memory authenticator checks only the credentials; any captcha answer and choice to be remembered will do. */
+const attemptWith = (email: string, password: string): SignInAttempt => ({
+  credentials: { email, password },
+  captcha: { key: 'captcha-1', text: 'ANY' },
+  remember: false,
+})
 
 describe('in-memory authenticator', () => {
   it('issues a challenge for a known account', async () => {
     const authenticator = new InMemoryAuthenticator({ account })
 
-    const challenge = await authenticator.verifyCredentials({ email: account.email, password: account.password })
+    const challenge = await authenticator.verifyCredentials(attemptWith(account.email, account.password))
 
     expect(challenge).toEqual({ id: expect.any(String), email: account.email })
   })
@@ -17,7 +25,7 @@ describe('in-memory authenticator', () => {
   it('matches the email case-insensitively', async () => {
     const authenticator = new InMemoryAuthenticator({ account })
 
-    const challenge = await authenticator.verifyCredentials({ email: 'ADA@example.com', password: account.password })
+    const challenge = await authenticator.verifyCredentials(attemptWith('ADA@example.com', account.password))
 
     expect(challenge.email).toBe(account.email)
   })
@@ -26,7 +34,7 @@ describe('in-memory authenticator', () => {
     const authenticator = new InMemoryAuthenticator({ account })
 
     await expect(
-      authenticator.verifyCredentials({ email: account.email, password: 'wrong-password' }),
+      authenticator.verifyCredentials(attemptWith(account.email, 'wrong-password')),
     ).rejects.toBeInstanceOf(CredentialsRejectedError)
   })
 
@@ -34,13 +42,13 @@ describe('in-memory authenticator', () => {
     const authenticator = new InMemoryAuthenticator({ account })
 
     await expect(
-      authenticator.verifyCredentials({ email: 'grace@example.com', password: account.password }),
+      authenticator.verifyCredentials(attemptWith('grace@example.com', account.password)),
     ).rejects.toBeInstanceOf(CredentialsRejectedError)
   })
 
   it('opens a session when the challenge is answered with the right code', async () => {
     const authenticator = new InMemoryAuthenticator({ account })
-    const challenge = await authenticator.verifyCredentials({ email: account.email, password: account.password })
+    const challenge = await authenticator.verifyCredentials(attemptWith(account.email, account.password))
 
     await expect(authenticator.verifyCode(challenge.id, account.oneTimeCode)).resolves.toEqual({
       email: account.email,
@@ -49,14 +57,14 @@ describe('in-memory authenticator', () => {
 
   it('rejects a wrong code', async () => {
     const authenticator = new InMemoryAuthenticator({ account })
-    const challenge = await authenticator.verifyCredentials({ email: account.email, password: account.password })
+    const challenge = await authenticator.verifyCredentials(attemptWith(account.email, account.password))
 
     await expect(authenticator.verifyCode(challenge.id, '000000')).rejects.toBeInstanceOf(OneTimeCodeRejectedError)
   })
 
   it('accepts each challenge only once', async () => {
     const authenticator = new InMemoryAuthenticator({ account })
-    const challenge = await authenticator.verifyCredentials({ email: account.email, password: account.password })
+    const challenge = await authenticator.verifyCredentials(attemptWith(account.email, account.password))
     await authenticator.verifyCode(challenge.id, account.oneTimeCode)
 
     await expect(authenticator.verifyCode(challenge.id, account.oneTimeCode)).rejects.toBeInstanceOf(
@@ -74,7 +82,7 @@ describe('in-memory authenticator', () => {
 
   it('records every code it resends', async () => {
     const authenticator = new InMemoryAuthenticator({ account })
-    const challenge = await authenticator.verifyCredentials({ email: account.email, password: account.password })
+    const challenge = await authenticator.verifyCredentials(attemptWith(account.email, account.password))
 
     await authenticator.resendCode(challenge.id)
 
@@ -94,7 +102,7 @@ describe('in-memory authenticator', () => {
       const authenticator = new InMemoryAuthenticator({ account, latencyMs: 400 })
       const onAnswered = vi.fn<() => void>()
 
-      void authenticator.verifyCredentials({ email: account.email, password: account.password }).then(onAnswered)
+      void authenticator.verifyCredentials(attemptWith(account.email, account.password)).then(onAnswered)
 
       await vi.advanceTimersByTimeAsync(399)
       expect(onAnswered).not.toHaveBeenCalled()

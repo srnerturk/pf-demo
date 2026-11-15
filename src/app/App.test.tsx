@@ -2,6 +2,7 @@ import { render, screen, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { MemoryRouter, useLocation } from 'react-router'
 import { beforeEach, describe, expect, it } from 'vitest'
+import { makeRequestCaptcha } from '@/features/auth/application/request-captcha'
 import { makeResendOneTimeCode } from '@/features/auth/application/resend-one-time-code'
 import { makeSignIn } from '@/features/auth/application/sign-in'
 import { makeVerifyOneTimeCode } from '@/features/auth/application/verify-one-time-code'
@@ -19,6 +20,7 @@ import { WebStorageLocalePreferenceStore } from '@/shared/i18n/web-storage-local
 import { App } from './App'
 
 const account = { email: 'ada@example.com', password: 'password123', oneTimeCode: '123456' }
+const captcha = { key: 'captcha-1', image: 'data:image/png;base64,AAAA' }
 
 function CurrentPath() {
   return <output aria-label="Current path">{useLocation().pathname}</output>
@@ -35,6 +37,7 @@ function renderApp({ at = '/', signedInAs }: { at?: string; signedInAs?: string 
     <MemoryRouter initialEntries={[at]}>
       <App
         signIn={makeSignIn(authenticator)}
+        requestCaptcha={makeRequestCaptcha({ issueCaptcha: async () => captcha })}
         verifyOneTimeCode={makeVerifyOneTimeCode(authenticator)}
         resendOneTimeCode={makeResendOneTimeCode(authenticator)}
         sessionStore={sessionStore}
@@ -86,6 +89,8 @@ describe('App', () => {
 
     await user.type(screen.getByLabelText('Email'), account.email)
     await user.type(screen.getByLabelText('Password'), account.password)
+    await screen.findByRole('img', { name: 'Security code to type' })
+    await user.type(screen.getByLabelText('Security code'), 'QZWL')
     await user.click(screen.getByRole('button', { name: 'Sign in' }))
 
     await screen.findByRole('heading', { name: 'Check your email' })
@@ -112,6 +117,8 @@ describe('App', () => {
 
     await user.type(screen.getByLabelText('Email'), account.email)
     await user.type(screen.getByLabelText('Password'), 'not-the-password')
+    await screen.findByRole('img', { name: 'Security code to type' })
+    await user.type(screen.getByLabelText('Security code'), 'QZWL')
     await user.click(screen.getByRole('button', { name: 'Sign in' }))
 
     expect(await screen.findByRole('alert')).toHaveTextContent('That email and password don’t match an account.')

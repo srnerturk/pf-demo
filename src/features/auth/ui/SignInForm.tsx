@@ -1,21 +1,31 @@
 import { useState } from 'react'
-import { useForm } from 'react-hook-form'
+import { Controller, useForm } from 'react-hook-form'
 import { CircleAlertIcon, EyeIcon, EyeOffIcon } from 'lucide-react'
 import { FormField } from '@/shared/components/FormField'
 import { SubmitButton } from '@/shared/components/SubmitButton'
 import { Alert, AlertDescription } from '@/shared/ui/alert'
 import { Button } from '@/shared/ui/button'
+import { Checkbox } from '@/shared/ui/checkbox'
 import { Input } from '@/shared/ui/input'
+import { Label } from '@/shared/ui/label'
+import type { RequestCaptcha } from '../application/request-captcha'
 import { CredentialsRejectedError, type SignIn } from '../application/sign-in'
 import type { SignInChallenge } from '../domain/authentication'
+import { validateCaptchaText } from '../domain/captcha'
 import {
-  PASSWORD_MIN_LENGTH,
   validateEmail,
   validatePassword,
   type Credentials,
   type CredentialsViolation,
 } from '../domain/credentials'
+import { CaptchaField } from './CaptchaField'
 import { ScreenHeader } from './ScreenHeader'
+import { useCaptcha } from './useCaptcha'
+
+interface SignInFormValues extends Credentials {
+  captchaText: string
+  remember: boolean
+}
 
 const VIOLATION_MESSAGES: Record<keyof Credentials, Partial<Record<CredentialsViolation, string>>> = {
   email: {
@@ -24,8 +34,12 @@ const VIOLATION_MESSAGES: Record<keyof Credentials, Partial<Record<CredentialsVi
   },
   password: {
     required: 'Enter your password.',
-    'too-short': `Use at least ${PASSWORD_MIN_LENGTH} characters.`,
   },
+}
+
+const CAPTCHA_MESSAGES = {
+  required: 'Enter the characters in the picture.',
+  unavailable: 'Load a picture, then enter its characters.',
 }
 
 const REJECTED_MESSAGE = 'That email and password don’t match an account. Check them and try again.'
@@ -41,27 +55,45 @@ function ruleFor(field: keyof Credentials, rule: (value: string) => CredentialsV
 
 interface SignInFormProps {
   signIn: SignIn
+  requestCaptcha: RequestCaptcha
   onChallengeIssued: (challenge: SignInChallenge) => void
 }
 
-export function SignInForm({ signIn, onChallengeIssued }: SignInFormProps) {
+export function SignInForm({ signIn, requestCaptcha, onChallengeIssued }: SignInFormProps) {
   const [isPasswordVisible, setIsPasswordVisible] = useState(false)
+  const captcha = useCaptcha(requestCaptcha)
   const {
     register,
     handleSubmit,
     setError,
+    resetField,
+    control,
     formState: { errors, isSubmitting },
-  } = useForm<Credentials>({
-    defaultValues: { email: '', password: '' },
+  } = useForm<SignInFormValues>({
+    defaultValues: { email: '', password: '', captchaText: '', remember: false },
     mode: 'onTouched',
   })
 
-  const onSubmit = handleSubmit(async (credentials) => {
+  /** A captcha answers one attempt only, so every new picture starts with an empty answer. */
+  function showNewCaptcha() {
+    resetField('captchaText')
+    captcha.refresh()
+  }
+
+  const onSubmit = handleSubmit(async ({ email, password, captchaText, remember }) => {
+    if (captcha.state.status !== 'ready') return
     try {
-      onChallengeIssued(await signIn(credentials))
+      onChallengeIssued(
+        await signIn({
+          credentials: { email, password },
+          captcha: { key: captcha.state.captcha.key, text: captchaText },
+          remember,
+        }),
+      )
     } catch (error) {
       const message = error instanceof CredentialsRejectedError ? REJECTED_MESSAGE : FAILURE_MESSAGE
       setError('root.signInFailure', { message })
+      showNewCaptcha()
     }
   })
 
@@ -107,6 +139,31 @@ export function SignInForm({ signIn, onChallengeIssued }: SignInFormProps) {
             </div>
           )}
         </FormField>
+
+        <CaptchaField
+          state={captcha.state}
+          onRefresh={showNewCaptcha}
+          error={errors.captchaText?.message}
+          inputProps={register('captchaText', {
+            validate: (text) => {
+              if (captcha.state.status !== 'ready') return CAPTCHA_MESSAGES.unavailable
+              return validateCaptchaText(text) === null ? true : CAPTCHA_MESSAGES.required
+            },
+          })}
+        />
+
+        <Controller
+          control={control}
+          name="remember"
+          render={({ field: { value, onChange, ...field } }) => (
+            <div className="flex items-center gap-2">
+              <Checkbox {...field} id="sign-in-remember" checked={value} onCheckedChange={(checked) => onChange(checked === true)} />
+              <Label htmlFor="sign-in-remember" className="font-normal">
+                Remember me
+              </Label>
+            </div>
+          )}
+        />
 
         {errors.root?.signInFailure && (
           <Alert variant="destructive">
