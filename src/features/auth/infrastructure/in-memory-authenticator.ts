@@ -4,10 +4,7 @@ import { OneTimeCodeRejectedError, type OneTimeCodeVerifier } from '../applicati
 import type { Session, SignInAttempt, SignInChallenge } from '../domain/authentication'
 
 export interface InMemoryAccount {
-<<<<<<< HEAD
-=======
   name: string
->>>>>>> development
   email: string
   password: string
   oneTimeCode: string
@@ -16,33 +13,16 @@ export interface InMemoryAccount {
 interface InMemoryAuthenticatorOptions {
   account: InMemoryAccount
   latencyMs?: number
-<<<<<<< HEAD
-}
-
-=======
   now?: () => number
 }
 
 const SESSION_LIFETIME_MS = 60 * 60 * 1000
 
->>>>>>> development
 /** Stand-in for a real authentication API; swap it in the composition root. */
 export class InMemoryAuthenticator implements CredentialVerifier, OneTimeCodeVerifier, OneTimeCodeSender {
   readonly resentChallengeIds: string[] = []
   private readonly account: InMemoryAccount
   private readonly latencyMs: number
-<<<<<<< HEAD
-  private readonly openChallenges = new Map<string, SignInChallenge>()
-  private issuedChallenges = 0
-
-  constructor({ account, latencyMs = 0 }: InMemoryAuthenticatorOptions) {
-    this.account = account
-    this.latencyMs = latencyMs
-  }
-
-  /** Checks only the credentials: the captcha answer and the choice to be remembered are ignored. */
-  async verifyCredentials({ credentials: { email, password } }: SignInAttempt): Promise<SignInChallenge> {
-=======
   private readonly now: () => number
   private readonly openChallenges = new Map<string, SignInChallenge>()
   private issuedChallenges = 0
@@ -55,17 +35,12 @@ export class InMemoryAuthenticator implements CredentialVerifier, OneTimeCodeVer
 
   /** Checks only the credentials: the captcha answer and the choice to be remembered are ignored. */
   async verifyCredentials({ credentials: { email, password }, remember }: SignInAttempt): Promise<SignInChallenge> {
->>>>>>> development
     await this.simulateLatency()
     const isKnownAccount = email.toLowerCase() === this.account.email.toLowerCase() && password === this.account.password
     if (!isKnownAccount) throw new CredentialsRejectedError()
 
     this.issuedChallenges += 1
-<<<<<<< HEAD
-    const challenge: SignInChallenge = { id: `challenge-${this.issuedChallenges}`, email: this.account.email }
-=======
     const challenge: SignInChallenge = { id: `challenge-${this.issuedChallenges}`, email: this.account.email, remember }
->>>>>>> development
     this.openChallenges.set(challenge.id, challenge)
     return challenge
   }
@@ -76,9 +51,6 @@ export class InMemoryAuthenticator implements CredentialVerifier, OneTimeCodeVer
     if (!challenge || code !== this.account.oneTimeCode) throw new OneTimeCodeRejectedError()
 
     this.openChallenges.delete(id)
-<<<<<<< HEAD
-    return { email: challenge.email, accessToken: `in-memory-access-token-${id}` }
-=======
     return {
       user: { id: 'in-memory-user', name: this.account.name, email: this.account.email },
       tokens: {
@@ -88,7 +60,6 @@ export class InMemoryAuthenticator implements CredentialVerifier, OneTimeCodeVer
       },
       remember: challenge.remember,
     }
->>>>>>> development
   }
 
   async resendCode(challengeId: string): Promise<void> {

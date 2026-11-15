@@ -14,22 +14,12 @@ export interface SignInChallenge {
   /** Whatever the issuer needs to recognise the challenge again; opaque to everyone else. */
   id: string
   email: string
-<<<<<<< HEAD
-=======
   /** Carried over from the attempt, so the session it leads to knows whether to outlive this visit. */
   remember: boolean
->>>>>>> development
   /** The code itself, when the issuer hands it back (test environments do), so it can be filled in. */
   revealedCode?: string
 }
 
-<<<<<<< HEAD
-/** A completed sign-in. */
-export interface Session {
-  email: string
-  /** Proves to the PF services who is asking; opaque to this app. */
-  accessToken: string
-=======
 /** The person a session belongs to. */
 export interface SignedInUser {
   id: string
@@ -56,5 +46,4 @@ export interface Session {
 /** A session ends when its access token stops working; there is no way to renew it yet. */
 export function hasExpired(session: Session, now: number): boolean {
   return now >= session.tokens.expiresAt
->>>>>>> development
 }
