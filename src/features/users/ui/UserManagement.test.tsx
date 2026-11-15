@@ -73,19 +73,25 @@ describe('UserManagement', () => {
     await vi.waitFor(() => expect(screen.getByText('Aramanızla eşleşen kullanıcı yok.')).toBeInTheDocument())
   })
 
-  it('sorts by a column and pages through the results', async () => {
+  it('pages through the results', async () => {
     const { user } = renderScreen()
     await waitForRows()
 
-    await user.click(within(screen.getByRole('columnheader', { name: /ID/ })).getByRole('button'))
-    await vi.waitFor(() => expect(firstCellIds()[0]).toBe('1'))
-
     await user.click(screen.getByRole('button', { name: 'Sayfa 3' }))
-    await vi.waitFor(() => expect(firstCellIds()).toEqual(['21', '22', '23']))
+    await vi.waitFor(() => expect(firstCellIds()).toEqual(['3', '2', '1']))
 
     await user.click(screen.getByRole('combobox', { name: 'Sayfa başına' }))
     await user.click(screen.getByRole('option', { name: '25' }))
     await vi.waitFor(() => expect(dataRows()).toHaveLength(23))
+  })
+
+  it('offers no column sorting, since the users service lists in its own order', async () => {
+    renderScreen()
+    await waitForRows()
+
+    for (const header of within(table()).getAllByRole('columnheader')) {
+      expect(within(header).queryByRole('button')).not.toBeInTheDocument()
+    }
   })
 
   it('deactivates the chosen users together', async () => {
