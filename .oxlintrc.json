@@ -30,7 +30,7 @@
           {
             "patterns": [
               {
-                "group": ["react", "react-*", "react-hook-form", "**/infrastructure/**", "**/ui/**", "@/app/**", "@/shared/ui/**"],
+                "group": ["react", "react-*", "react-hook-form", "**/infrastructure/**", "**/ui/**", "@/app/**", "@/shared/ui/**", "@/shared/components/**"],
                 "message": "Dependency rule: use cases depend only on the domain and their own ports."
               }
             ]

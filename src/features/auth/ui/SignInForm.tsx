@@ -1,6 +1,11 @@
 import { useState } from 'react'
 import { useForm } from 'react-hook-form'
-import { FormField, formControlClassName } from '@/shared/ui/FormField'
+import { CircleAlertIcon, EyeIcon, EyeOffIcon } from 'lucide-react'
+import { FormField } from '@/shared/components/FormField'
+import { SubmitButton } from '@/shared/components/SubmitButton'
+import { Alert, AlertDescription } from '@/shared/ui/alert'
+import { Button } from '@/shared/ui/button'
+import { Input } from '@/shared/ui/input'
 import { CredentialsRejectedError, type SignIn } from '../application/sign-in'
 import type { SignInChallenge } from '../domain/authentication'
 import {
@@ -10,8 +15,6 @@ import {
   type Credentials,
   type CredentialsViolation,
 } from '../domain/credentials'
-import { primaryButtonClassName } from './button-styles'
-import { EyeIcon, EyeOffIcon } from './icons'
 import { ScreenHeader } from './ScreenHeader'
 
 const VIOLATION_MESSAGES: Record<keyof Credentials, Partial<Record<CredentialsViolation, string>>> = {
@@ -66,16 +69,16 @@ export function SignInForm({ signIn, onChallengeIssued }: SignInFormProps) {
     <>
       <ScreenHeader title="Sign in" description="Welcome back. Enter your details to continue." />
 
-      <form onSubmit={onSubmit} noValidate className="flex flex-col gap-5">
+      <form onSubmit={onSubmit} noValidate className="grid gap-5">
         <FormField id="sign-in-email" label="Email" error={errors.email?.message}>
           {(controlProps) => (
-            <input
+            <Input
               {...controlProps}
               {...register('email', { validate: ruleFor('email', validateEmail) })}
               type="email"
               autoComplete="username"
               placeholder="name@company.com"
-              className={formControlClassName}
+              className="h-10"
             />
           )}
         </FormField>
@@ -83,35 +86,38 @@ export function SignInForm({ signIn, onChallengeIssued }: SignInFormProps) {
         <FormField id="sign-in-password" label="Password" error={errors.password?.message}>
           {(controlProps) => (
             <div className="relative">
-              <input
+              <Input
                 {...controlProps}
                 {...register('password', { validate: ruleFor('password', validatePassword) })}
                 type={isPasswordVisible ? 'text' : 'password'}
                 autoComplete="current-password"
-                className={`${formControlClassName} pr-11`}
+                className="h-10 pr-10"
               />
-              <button
+              <Button
                 type="button"
+                variant="ghost"
+                size="icon"
                 onClick={() => setIsPasswordVisible((visible) => !visible)}
                 aria-label={isPasswordVisible ? 'Hide password' : 'Show password'}
                 aria-controls={controlProps.id}
-                className="absolute inset-y-0 right-0 flex w-11 items-center justify-center rounded-r-lg text-slate-400 transition-colors hover:text-slate-700 focus-visible:text-slate-700 focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-indigo-600"
+                className="absolute inset-y-0.5 right-0.5 h-auto text-muted-foreground hover:bg-transparent hover:text-foreground"
               >
                 {isPasswordVisible ? <EyeOffIcon /> : <EyeIcon />}
-              </button>
+              </Button>
             </div>
           )}
         </FormField>
 
         {errors.root?.signInFailure && (
-          <p role="alert" className="rounded-lg bg-red-50 px-3 py-2 text-sm text-red-700">
-            {errors.root.signInFailure.message}
-          </p>
+          <Alert variant="destructive">
+            <CircleAlertIcon />
+            <AlertDescription>{errors.root.signInFailure.message}</AlertDescription>
+          </Alert>
         )}
 
-        <button type="submit" disabled={isSubmitting} className={primaryButtonClassName}>
-          {isSubmitting ? 'Signing in…' : 'Sign in'}
-        </button>
+        <SubmitButton pending={isSubmitting} pendingLabel="Signing in…" size="lg" className="w-full">
+          Sign in
+        </SubmitButton>
       </form>
     </>
   )

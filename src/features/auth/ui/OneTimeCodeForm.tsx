@@ -1,11 +1,13 @@
 import { useState } from 'react'
 import { Controller, useForm } from 'react-hook-form'
+import { ArrowLeftIcon, CircleAlertIcon } from 'lucide-react'
+import { SubmitButton } from '@/shared/components/SubmitButton'
+import { Alert, AlertDescription } from '@/shared/ui/alert'
+import { Button } from '@/shared/ui/button'
 import type { ResendOneTimeCode } from '../application/resend-one-time-code'
 import { OneTimeCodeRejectedError, type VerifyOneTimeCode } from '../application/verify-one-time-code'
 import type { Session, SignInChallenge } from '../domain/authentication'
 import { ONE_TIME_CODE_LENGTH, validateOneTimeCode, type OneTimeCodeViolation } from '../domain/one-time-code'
-import { primaryButtonClassName, subtleButtonClassName } from './button-styles'
-import { ArrowLeftIcon } from './icons'
 import { emptyOneTimeCode } from './one-time-code-digits'
 import { OneTimeCodeInput } from './OneTimeCodeInput'
 import { ResendCode } from './ResendCode'
@@ -83,14 +85,14 @@ export function OneTimeCodeForm({
         description={
           <>
             We sent a {ONE_TIME_CODE_LENGTH}-digit code to{' '}
-            <span className="font-medium text-slate-900">{challenge.email}</span>. Enter it below to finish signing in.
+            <span className="font-medium text-foreground">{challenge.email}</span>. Enter it below to finish signing in.
           </>
         }
       />
 
-      <form onSubmit={onSubmit} noValidate className="flex flex-col gap-5">
-        <fieldset className="flex flex-col gap-2">
-          <legend className="mb-1.5 text-sm font-medium text-slate-700">Verification code</legend>
+      <form onSubmit={onSubmit} noValidate className="grid gap-5">
+        <fieldset className="grid gap-2">
+          <legend className="mb-2 text-sm leading-none font-medium">Verification code</legend>
           <Controller
             control={control}
             name="digits"
@@ -108,33 +110,30 @@ export function OneTimeCodeForm({
             )}
           />
           {fieldError && (
-            <p id={ERROR_ID} className="text-sm text-red-600">
+            <p id={ERROR_ID} className="text-sm text-destructive">
               {fieldError}
             </p>
           )}
         </fieldset>
 
         {!fieldError && formError && (
-          <p id={ERROR_ID} role="alert" className="rounded-lg bg-red-50 px-3 py-2 text-sm text-red-700">
-            {formError}
-          </p>
+          <Alert id={ERROR_ID} variant="destructive">
+            <CircleAlertIcon />
+            <AlertDescription>{formError}</AlertDescription>
+          </Alert>
         )}
 
-        <button type="submit" disabled={isSubmitting} className={primaryButtonClassName}>
-          {isSubmitting ? 'Verifying…' : 'Verify'}
-        </button>
+        <SubmitButton pending={isSubmitting} pendingLabel="Verifying…" size="lg" className="w-full">
+          Verify
+        </SubmitButton>
       </form>
 
       <div className="mt-6 flex flex-col items-center gap-4">
         <ResendCode onResend={() => resendOneTimeCode(challenge)} cooldownSeconds={resendCooldownSeconds} />
-        <button
-          type="button"
-          onClick={onChangeEmail}
-          className={subtleButtonClassName}
-        >
+        <Button type="button" variant="ghost" size="sm" onClick={onChangeEmail} className="text-muted-foreground">
           <ArrowLeftIcon />
           Use a different email
-        </button>
+        </Button>
       </div>
     </>
   )

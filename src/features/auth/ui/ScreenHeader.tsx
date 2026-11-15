@@ -15,15 +15,15 @@ export function ScreenHeader({ title, description, focusOnMount = false }: Scree
   }, [focusOnMount])
 
   return (
-    <header className="mb-7">
+    <header className="mb-6 grid gap-1.5">
       <h1
         ref={titleRef}
         tabIndex={focusOnMount ? -1 : undefined}
-        className="text-2xl font-semibold tracking-tight text-slate-900 focus:outline-none"
+        className="text-2xl font-semibold tracking-tight focus:outline-none"
       >
         {title}
       </h1>
-      <p className="mt-1.5 text-sm text-slate-500">{description}</p>
+      <p className="text-sm text-muted-foreground">{description}</p>
     </header>
   )
 }
