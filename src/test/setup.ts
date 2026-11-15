@@ -6,6 +6,12 @@ import { afterEach } from 'vitest'
 Element.prototype.hasPointerCapture ??= () => false
 Element.prototype.releasePointerCapture ??= () => {}
 Element.prototype.scrollIntoView ??= () => {}
+// A Radix Checkbox inside a <form> measures itself with ResizeObserver.
+globalThis.ResizeObserver ??= class {
+  observe() {}
+  unobserve() {}
+  disconnect() {}
+}
 
 afterEach(() => {
   cleanup()

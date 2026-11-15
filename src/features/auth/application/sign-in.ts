@@ -1,17 +1,20 @@
-import type { SignInChallenge } from '../domain/authentication'
-import { validateCredentials, type Credentials, type CredentialsViolations } from '../domain/credentials'
+import type { SignInAttempt, SignInChallenge } from '../domain/authentication'
+import { validateCaptchaText, type CaptchaViolation } from '../domain/captcha'
+import { validateCredentials, type CredentialsViolations } from '../domain/credentials'
 
-/** Port: checks credentials and issues a one-time-code challenge. Implemented in infrastructure. */
+/** Port: checks credentials and the captcha answer, then issues a one-time-code challenge. Implemented in infrastructure. */
 export interface CredentialVerifier {
-  verifyCredentials(credentials: Credentials): Promise<SignInChallenge>
+  verifyCredentials(attempt: SignInAttempt): Promise<SignInChallenge>
 }
 
-export type SignIn = (credentials: Credentials) => Promise<SignInChallenge>
+export type SignIn = (attempt: SignInAttempt) => Promise<SignInChallenge>
+
+export type SignInViolations = CredentialsViolations & { captcha?: CaptchaViolation }
 
 export class InvalidCredentialsInputError extends Error {
-  readonly violations: CredentialsViolations
+  readonly violations: SignInViolations
 
-  constructor(violations: CredentialsViolations) {
+  constructor(violations: SignInViolations) {
     super(`Invalid credentials input: ${Object.keys(violations).join(', ')}`)
     this.name = 'InvalidCredentialsInputError'
     this.violations = violations
@@ -20,14 +23,20 @@ export class InvalidCredentialsInputError extends Error {
 
 export function makeSignIn(verifier: CredentialVerifier): SignIn {
   return async (draft) => {
-    const credentials: Credentials = { email: draft.email.trim(), password: draft.password }
+    const attempt: SignInAttempt = {
+      credentials: { email: draft.credentials.email.trim(), password: draft.credentials.password },
+      captcha: { key: draft.captcha.key, text: draft.captcha.text.trim() },
+      remember: draft.remember,
+    }
 
-    const violations = validateCredentials(credentials)
+    const violations: SignInViolations = validateCredentials(attempt.credentials)
+    const captchaViolation = validateCaptchaText(attempt.captcha.text)
+    if (captchaViolation) violations.captcha = captchaViolation
     if (Object.keys(violations).length > 0) {
       throw new InvalidCredentialsInputError(violations)
     }
 
-    return verifier.verifyCredentials(credentials)
+    return verifier.verifyCredentials(attempt)
   }
 }
 

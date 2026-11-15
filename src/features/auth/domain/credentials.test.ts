@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { PASSWORD_MIN_LENGTH, validateCredentials, validateEmail, validatePassword } from './credentials'
+import { validateCredentials, validateEmail, validatePassword } from './credentials'
 
 describe('credential rules', () => {
   describe('email', () => {
@@ -21,12 +21,12 @@ describe('credential rules', () => {
       expect(validatePassword('')).toBe('required')
     })
 
-    it(`must have at least ${PASSWORD_MIN_LENGTH} characters`, () => {
-      expect(validatePassword('a'.repeat(PASSWORD_MIN_LENGTH - 1))).toBe('too-short')
+    it('leaves its length for the server to judge, so short existing passwords still work', () => {
+      expect(validatePassword('123456')).toBeNull()
     })
 
     it('counts whitespace as part of the password', () => {
-      expect(validatePassword(' '.repeat(PASSWORD_MIN_LENGTH))).toBeNull()
+      expect(validatePassword(' ')).toBeNull()
     })
   })
 

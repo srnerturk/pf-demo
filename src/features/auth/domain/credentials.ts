@@ -3,11 +3,9 @@ export interface Credentials {
   password: string
 }
 
-export type CredentialsViolation = 'required' | 'invalid-email' | 'too-short'
+export type CredentialsViolation = 'required' | 'invalid-email'
 
 export type CredentialsViolations = Partial<Record<keyof Credentials, CredentialsViolation>>
-
-export const PASSWORD_MIN_LENGTH = 8
 
 const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
 
@@ -17,10 +15,12 @@ export function validateEmail(email: string): CredentialsViolation | null {
   return EMAIL_PATTERN.test(trimmed) ? null : 'invalid-email'
 }
 
-/** Passwords are taken verbatim: whitespace is a legitimate character. */
+/**
+ * Passwords are taken verbatim: whitespace is a legitimate character.
+ * Signing in only asks for one; how long it must be was decided when it was set, by the server.
+ */
 export function validatePassword(password: string): CredentialsViolation | null {
-  if (password.length === 0) return 'required'
-  return password.length < PASSWORD_MIN_LENGTH ? 'too-short' : null
+  return password.length === 0 ? 'required' : null
 }
 
 const RULES: Record<keyof Credentials, (value: string) => CredentialsViolation | null> = {

@@ -68,6 +68,21 @@ React Router lives only in `app/` and `main.tsx`; features don't know about URLs
 - `App` expects to be rendered inside a router: `BrowserRouter` in `main.tsx`,
   `MemoryRouter` with `initialEntries` in tests.
 
+### Auth API
+
+The PF auth service lives at `VITE_AUTH_API_BASE_URL` (default `https://pf-auth-uat.halkode.com.tr`).
+`HttpAuthApi` (`features/auth/infrastructure`) is its adapter; `fetch` is injected so tests never touch the network.
+
+- **Captcha** — `GET /auth/captcha` → `{ captcha_key, image }` (`image` is a PNG data URL). The sign-in
+  form shows it, offers a new one on request, and fetches a new one after every failed attempt
+  (a captcha answers one attempt).
+- **Sign in** — `SignIn` takes a `SignInAttempt`: `{ credentials, captcha: { key, text }, remember }`
+  ("Remember me" on the form). Not wired yet: `POST /auth/login` is still served by
+  `InMemoryAuthenticator`, which checks only the credentials.
+- **Device** — `WebStorageDeviceId` creates this browser's `device_id` once and keeps it in
+  `localStorage` (key `pf-demo.device-id`); it falls back to one id per visit when storage is blocked.
+- Signing in asks only that a password is given; its length is the server's rule.
+
 ### Side menu
 
 `app/navigation/admin-menu.ts` lists the menu's sections (Giriş Kontrolü,

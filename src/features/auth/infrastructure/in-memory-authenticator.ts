@@ -1,8 +1,7 @@
 import type { OneTimeCodeSender } from '../application/resend-one-time-code'
 import { CredentialsRejectedError, type CredentialVerifier } from '../application/sign-in'
 import { OneTimeCodeRejectedError, type OneTimeCodeVerifier } from '../application/verify-one-time-code'
-import type { Session, SignInChallenge } from '../domain/authentication'
-import type { Credentials } from '../domain/credentials'
+import type { Session, SignInAttempt, SignInChallenge } from '../domain/authentication'
 
 export interface InMemoryAccount {
   email: string
@@ -28,7 +27,8 @@ export class InMemoryAuthenticator implements CredentialVerifier, OneTimeCodeVer
     this.latencyMs = latencyMs
   }
 
-  async verifyCredentials({ email, password }: Credentials): Promise<SignInChallenge> {
+  /** Checks only the credentials: the captcha answer and the choice to be remembered are ignored. */
+  async verifyCredentials({ credentials: { email, password } }: SignInAttempt): Promise<SignInChallenge> {
     await this.simulateLatency()
     const isKnownAccount = email.toLowerCase() === this.account.email.toLowerCase() && password === this.account.password
     if (!isKnownAccount) throw new CredentialsRejectedError()
