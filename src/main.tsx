@@ -8,6 +8,7 @@ import { makeSignIn } from '@/features/auth/application/sign-in'
 import { makeVerifyOneTimeCode } from '@/features/auth/application/verify-one-time-code'
 import { HttpAuthApi } from '@/features/auth/infrastructure/http-auth-api'
 import { InMemoryAuthenticator, type InMemoryAccount } from '@/features/auth/infrastructure/in-memory-authenticator'
+import { WebStorageDeviceId } from '@/features/auth/infrastructure/web-storage-device-id'
 import { WebStorageSessionStore } from '@/features/auth/infrastructure/web-storage-session-store'
 import { makeChangeUsersStatus } from '@/features/users/application/change-users-status'
 import { makeCreateUser } from '@/features/users/application/create-user'
@@ -22,12 +23,14 @@ import { WebStorageLocalePreferenceStore } from '@/shared/i18n/web-storage-local
 import './index.css'
 
 // Composition root: the only place that knows which adapters back the ports.
+const deviceId = new WebStorageDeviceId(window.localStorage)
 const authApi = new HttpAuthApi({
   baseUrl: import.meta.env.VITE_AUTH_API_BASE_URL ?? 'https://pf-auth-uat.halkode.com.tr',
   fetch: window.fetch,
+  deviceId: () => deviceId.current(),
 })
-// Signing in still goes through the in-memory authenticator (it ignores the captcha answer)
-// until HttpAuthApi speaks POST /auth/login.
+// Resending a one-time code still goes through the in-memory authenticator until HttpAuthApi
+// speaks that endpoint: it only pretends to resend.
 const demoAccount: InMemoryAccount = { email: 'demo@example.com', password: 'password123', oneTimeCode: '123456' }
 const authenticator = new InMemoryAuthenticator({ account: demoAccount, latencyMs: 700 })
 const sessionStore = new WebStorageSessionStore(window.localStorage)
@@ -41,9 +44,9 @@ createRoot(document.getElementById('root')!).render(
   <StrictMode>
     <BrowserRouter>
       <App
-        signIn={makeSignIn(authenticator)}
+        signIn={makeSignIn(authApi)}
         requestCaptcha={makeRequestCaptcha(authApi)}
-        verifyOneTimeCode={makeVerifyOneTimeCode(authenticator)}
+        verifyOneTimeCode={makeVerifyOneTimeCode(authApi)}
         resendOneTimeCode={makeResendOneTimeCode(authenticator)}
         sessionStore={sessionStore}
         themePreferenceStore={themePreferenceStore}
@@ -58,7 +61,6 @@ createRoot(document.getElementById('root')!).render(
           listUserGroups: makeListUserGroups(userDirectory),
           saveFile: saveFileInBrowser,
         }}
-        footnote={`Demo account: sign in as ${demoAccount.email} with password ${demoAccount.password} and any security code, then use code ${demoAccount.oneTimeCode}.`}
       />
     </BrowserRouter>
   </StrictMode>,

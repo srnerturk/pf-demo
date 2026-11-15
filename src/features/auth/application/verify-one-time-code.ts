@@ -3,7 +3,7 @@ import { validateOneTimeCode, type OneTimeCodeViolation } from '../domain/one-ti
 
 /** Port: confirms the one-time code for a challenge. Implemented in infrastructure. */
 export interface OneTimeCodeVerifier {
-  verifyCode(challengeId: string, code: string): Promise<Session>
+  verifyCode(challenge: SignInChallenge, code: string): Promise<Session>
 }
 
 export type VerifyOneTimeCode = (challenge: SignInChallenge, code: string) => Promise<Session>
@@ -23,7 +23,7 @@ export function makeVerifyOneTimeCode(verifier: OneTimeCodeVerifier): VerifyOneT
     const violation = validateOneTimeCode(code)
     if (violation) throw new InvalidOneTimeCodeInputError(violation)
 
-    return verifier.verifyCode(challenge.id, code)
+    return verifier.verifyCode(challenge, code)
   }
 }
 

@@ -77,8 +77,20 @@ The PF auth service lives at `VITE_AUTH_API_BASE_URL` (default `https://pf-auth-
   form shows it, offers a new one on request, and fetches a new one after every failed attempt
   (a captcha answers one attempt).
 - **Sign in** — `SignIn` takes a `SignInAttempt`: `{ credentials, captcha: { key, text }, remember }`
-  ("Remember me" on the form). Not wired yet: `POST /auth/login` is still served by
-  `InMemoryAuthenticator`, which checks only the credentials.
+  ("Remember me" on the form). `POST /auth/login` (with cookies) sends it as
+  `{ email, password, captcha, captcha_key, remember, device_id, client_type: "admin", remote_login: true }`:
+
+  | Answer | Means | Becomes |
+  | --- | --- | --- |
+  | `200 { otp_required: true, user_id, otp_code?, challenge_token }` | Credentials accepted, a one-time code must follow; the challenge token is also set as an httponly `__Host-pf-login-otp-*` cookie | `SignInChallenge { id: String(user_id), revealedCode: otp_code }` |
+  | `401 { error }` | Wrong email or password | `CredentialsRejectedError` |
+  | `422 { error }` | Wrong (or expired) captcha answer | `CaptchaRejectedError` |
+
+  A `200` without `otp_required` isn't supported yet and shows as a general failure.
+- **One-time code** — `POST /auth/otp/verify` (with cookies) sends `{ client_type: "admin", otp, user_id }`.
+  `400`/`401`/`422 { error }` (wrong or expired code) becomes `OneTimeCodeRejectedError`; any other
+  success opens the session. When login hands back `otp_code` (UAT does), the code screen opens
+  with it filled in. Resending is not wired yet: `InMemoryAuthenticator` only pretends to resend.
 - **Device** — `WebStorageDeviceId` creates this browser's `device_id` once and keeps it in
   `localStorage` (key `pf-demo.device-id`); it falls back to one id per visit when storage is blocked.
 - Signing in asks only that a password is given; its length is the server's rule.

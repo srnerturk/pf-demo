@@ -9,7 +9,7 @@ import { Checkbox } from '@/shared/ui/checkbox'
 import { Input } from '@/shared/ui/input'
 import { Label } from '@/shared/ui/label'
 import type { RequestCaptcha } from '../application/request-captcha'
-import { CredentialsRejectedError, type SignIn } from '../application/sign-in'
+import { CaptchaRejectedError, CredentialsRejectedError, type SignIn } from '../application/sign-in'
 import type { SignInChallenge } from '../domain/authentication'
 import { validateCaptchaText } from '../domain/captcha'
 import {
@@ -43,7 +43,14 @@ const CAPTCHA_MESSAGES = {
 }
 
 const REJECTED_MESSAGE = 'That email and password don’t match an account. Check them and try again.'
+const CAPTCHA_REJECTED_MESSAGE = 'The security code didn’t match the picture. Enter the characters in the new one.'
 const FAILURE_MESSAGE = 'We couldn’t sign you in right now. Check your connection and try again.'
+
+function failureMessage(error: unknown): string {
+  if (error instanceof CredentialsRejectedError) return REJECTED_MESSAGE
+  if (error instanceof CaptchaRejectedError) return CAPTCHA_REJECTED_MESSAGE
+  return FAILURE_MESSAGE
+}
 
 /** Adapts a domain rule to React Hook Form's `validate`: `true` when valid, otherwise the message to show. */
 function ruleFor(field: keyof Credentials, rule: (value: string) => CredentialsViolation | null) {
@@ -91,8 +98,7 @@ export function SignInForm({ signIn, requestCaptcha, onChallengeIssued }: SignIn
         }),
       )
     } catch (error) {
-      const message = error instanceof CredentialsRejectedError ? REJECTED_MESSAGE : FAILURE_MESSAGE
-      setError('root.signInFailure', { message })
+      setError('root.signInFailure', { message: failureMessage(error) })
       showNewCaptcha()
     }
   })

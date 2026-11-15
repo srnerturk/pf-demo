@@ -39,12 +39,12 @@ export class InMemoryAuthenticator implements CredentialVerifier, OneTimeCodeVer
     return challenge
   }
 
-  async verifyCode(challengeId: string, code: string): Promise<Session> {
+  async verifyCode({ id }: SignInChallenge, code: string): Promise<Session> {
     await this.simulateLatency()
-    const challenge = this.openChallenges.get(challengeId)
+    const challenge = this.openChallenges.get(id)
     if (!challenge || code !== this.account.oneTimeCode) throw new OneTimeCodeRejectedError()
 
-    this.openChallenges.delete(challengeId)
+    this.openChallenges.delete(id)
     return { email: challenge.email }
   }
 

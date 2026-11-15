@@ -10,12 +10,14 @@ const challenge: SignInChallenge = { id: 'challenge-1', email: 'ada@example.com'
 const session: Session = { email: 'ada@example.com' }
 
 interface Overrides {
+  challenge?: SignInChallenge
   verifyOneTimeCode?: VerifyOneTimeCode
   resendOneTimeCode?: ResendOneTimeCode
   resendCooldownSeconds?: number
 }
 
 function renderForm({
+  challenge: issued = challenge,
   verifyOneTimeCode = vi.fn<VerifyOneTimeCode>().mockResolvedValue(session),
   resendOneTimeCode = vi.fn<ResendOneTimeCode>().mockResolvedValue(undefined),
   resendCooldownSeconds = 30,
@@ -25,7 +27,7 @@ function renderForm({
   const onChangeEmail = vi.fn<() => void>()
   render(
     <OneTimeCodeForm
-      challenge={challenge}
+      challenge={issued}
       verifyOneTimeCode={verifyOneTimeCode}
       resendOneTimeCode={resendOneTimeCode}
       resendCooldownSeconds={resendCooldownSeconds}
@@ -132,5 +134,23 @@ describe('OneTimeCodeForm', () => {
     await user.click(screen.getByRole('button', { name: 'Use a different email' }))
 
     expect(onChangeEmail).toHaveBeenCalledOnce()
+  })
+
+  it('fills in the code when the service revealed it, ready to verify', async () => {
+    const { user, verifyOneTimeCode, onVerified } = renderForm({ challenge: { ...challenge, revealedCode: '535744' } })
+
+    const digits = screen.getAllByRole('textbox').map((box) => (box as HTMLInputElement).value)
+    expect(digits).toEqual(['5', '3', '5', '7', '4', '4'])
+
+    await user.click(screen.getByRole('button', { name: 'Verify' }))
+
+    await vi.waitFor(() => expect(onVerified).toHaveBeenCalledWith(session))
+    expect(verifyOneTimeCode).toHaveBeenCalledWith({ ...challenge, revealedCode: '535744' }, '535744')
+  })
+
+  it('leaves the boxes empty when what the service revealed is not a code', () => {
+    renderForm({ challenge: { ...challenge, revealedCode: '12ab' } })
+
+    expect(screen.getAllByRole('textbox').map((box) => (box as HTMLInputElement).value)).toEqual(['', '', '', '', '', ''])
   })
 })
