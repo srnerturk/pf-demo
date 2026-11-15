@@ -8,7 +8,7 @@ import type { ResendOneTimeCode } from '../application/resend-one-time-code'
 import { OneTimeCodeRejectedError, type VerifyOneTimeCode } from '../application/verify-one-time-code'
 import type { Session, SignInChallenge } from '../domain/authentication'
 import { ONE_TIME_CODE_LENGTH, validateOneTimeCode, type OneTimeCodeViolation } from '../domain/one-time-code'
-import { emptyOneTimeCode } from './one-time-code-digits'
+import { emptyOneTimeCode, oneTimeCodeDigits } from './one-time-code-digits'
 import { OneTimeCodeInput } from './OneTimeCodeInput'
 import { ResendCode } from './ResendCode'
 import { ScreenHeader } from './ScreenHeader'
@@ -58,7 +58,7 @@ export function OneTimeCodeForm({
     reset,
     setError,
     formState: { errors, isSubmitting },
-  } = useForm<OneTimeCodeFormValues>({ defaultValues: { digits: emptyOneTimeCode() } })
+  } = useForm<OneTimeCodeFormValues>({ defaultValues: { digits: oneTimeCodeDigits(challenge.revealedCode) } })
 
   const onSubmit = handleSubmit(async ({ digits }) => {
     try {

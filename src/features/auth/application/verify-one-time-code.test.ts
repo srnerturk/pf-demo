@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import type { Session } from '../domain/authentication'
+import type { Session, SignInChallenge } from '../domain/authentication'
 import {
   InvalidOneTimeCodeInputError,
   makeVerifyOneTimeCode,
@@ -7,14 +7,14 @@ import {
 } from './verify-one-time-code'
 
 class RecordingVerifier implements OneTimeCodeVerifier {
-  readonly received: { challengeId: string; code: string }[] = []
-  async verifyCode(challengeId: string, code: string): Promise<Session> {
-    this.received.push({ challengeId, code })
+  readonly received: { challenge: SignInChallenge; code: string }[] = []
+  async verifyCode(challenge: SignInChallenge, code: string): Promise<Session> {
+    this.received.push({ challenge, code })
     return { email: 'ada@example.com' }
   }
 }
 
-const challenge = { id: 'challenge-1', email: 'ada@example.com' }
+const challenge: SignInChallenge = { id: 'challenge-1', email: 'ada@example.com' }
 
 describe('verify one-time code', () => {
   it('answers the challenge with the code and returns the session', async () => {
@@ -24,7 +24,7 @@ describe('verify one-time code', () => {
     const session = await verifyOneTimeCode(challenge, '123456')
 
     expect(session).toEqual({ email: 'ada@example.com' })
-    expect(verifier.received).toEqual([{ challengeId: 'challenge-1', code: '123456' }])
+    expect(verifier.received).toEqual([{ challenge, code: '123456' }])
   })
 
   it('refuses a malformed code without contacting the verifier', async () => {

@@ -47,3 +47,11 @@ export class CredentialsRejectedError extends Error {
     this.name = 'CredentialsRejectedError'
   }
 }
+
+/** Thrown by a CredentialVerifier when the captcha answer doesn't match the picture (or the captcha expired). */
+export class CaptchaRejectedError extends Error {
+  constructor() {
+    super('Captcha answer rejected')
+    this.name = 'CaptchaRejectedError'
+  }
+}

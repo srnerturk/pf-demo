@@ -11,8 +11,11 @@ export interface SignInAttempt {
 
 /** A pending sign-in: credentials were accepted, a one-time code must now be confirmed. */
 export interface SignInChallenge {
+  /** Whatever the issuer needs to recognise the challenge again; opaque to everyone else. */
   id: string
   email: string
+  /** The code itself, when the issuer hands it back (test environments do), so it can be filled in. */
+  revealedCode?: string
 }
 
 /** A completed sign-in. */

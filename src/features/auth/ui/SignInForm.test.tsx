@@ -2,7 +2,7 @@ import { render, screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { describe, expect, it, vi } from 'vitest'
 import type { RequestCaptcha } from '../application/request-captcha'
-import { CredentialsRejectedError, type SignIn } from '../application/sign-in'
+import { CaptchaRejectedError, CredentialsRejectedError, type SignIn } from '../application/sign-in'
 import type { SignInChallenge } from '../domain/authentication'
 import type { Captcha } from '../domain/captcha'
 import { SignInForm } from './SignInForm'
@@ -168,6 +168,19 @@ describe('SignInForm', () => {
     await vi.waitFor(async () => expect(await captchaPicture()).toHaveAttribute('src', secondCaptcha.image))
     expect(screen.getByLabelText('Security code')).toHaveValue('')
     expect(onChallengeIssued).not.toHaveBeenCalled()
+  })
+
+  it('says when the security code is wrong, and offers a fresh captcha', async () => {
+    const { user } = renderForm({ signIn: vi.fn<SignIn>().mockRejectedValue(new CaptchaRejectedError()) })
+    await captchaPicture()
+
+    await fillIn(user, validInput)
+    await user.click(screen.getByRole('button', { name: 'Sign in' }))
+
+    expect(await screen.findByRole('alert')).toHaveTextContent(
+      'The security code didn’t match the picture. Enter the characters in the new one.',
+    )
+    await vi.waitFor(async () => expect(await captchaPicture()).toHaveAttribute('src', secondCaptcha.image))
   })
 
   it('reports an unexpected failure separately from wrong credentials', async () => {

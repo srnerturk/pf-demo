@@ -50,7 +50,7 @@ describe('in-memory authenticator', () => {
     const authenticator = new InMemoryAuthenticator({ account })
     const challenge = await authenticator.verifyCredentials(attemptWith(account.email, account.password))
 
-    await expect(authenticator.verifyCode(challenge.id, account.oneTimeCode)).resolves.toEqual({
+    await expect(authenticator.verifyCode(challenge, account.oneTimeCode)).resolves.toEqual({
       email: account.email,
     })
   })
@@ -59,15 +59,15 @@ describe('in-memory authenticator', () => {
     const authenticator = new InMemoryAuthenticator({ account })
     const challenge = await authenticator.verifyCredentials(attemptWith(account.email, account.password))
 
-    await expect(authenticator.verifyCode(challenge.id, '000000')).rejects.toBeInstanceOf(OneTimeCodeRejectedError)
+    await expect(authenticator.verifyCode(challenge, '000000')).rejects.toBeInstanceOf(OneTimeCodeRejectedError)
   })
 
   it('accepts each challenge only once', async () => {
     const authenticator = new InMemoryAuthenticator({ account })
     const challenge = await authenticator.verifyCredentials(attemptWith(account.email, account.password))
-    await authenticator.verifyCode(challenge.id, account.oneTimeCode)
+    await authenticator.verifyCode(challenge, account.oneTimeCode)
 
-    await expect(authenticator.verifyCode(challenge.id, account.oneTimeCode)).rejects.toBeInstanceOf(
+    await expect(authenticator.verifyCode(challenge, account.oneTimeCode)).rejects.toBeInstanceOf(
       OneTimeCodeRejectedError,
     )
   })
@@ -75,7 +75,7 @@ describe('in-memory authenticator', () => {
   it('rejects a code for a challenge it never issued', async () => {
     const authenticator = new InMemoryAuthenticator({ account })
 
-    await expect(authenticator.verifyCode('unknown', account.oneTimeCode)).rejects.toBeInstanceOf(
+    await expect(authenticator.verifyCode({ id: 'unknown', email: account.email }, account.oneTimeCode)).rejects.toBeInstanceOf(
       OneTimeCodeRejectedError,
     )
   })
