@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { textButtonClassName } from './button-styles'
+import { Button } from '@/shared/ui/button'
 import { useResendCountdown } from './useResendCountdown'
 
 type ResendState = 'idle' | 'sending' | 'sent' | 'failed'
@@ -28,20 +28,21 @@ export function ResendCode({ onResend, cooldownSeconds }: ResendCodeProps) {
 
   return (
     <div className="flex flex-col items-center gap-2 text-sm">
-      <p className="text-slate-500">
+      <p className="text-muted-foreground">
         Didn’t get the code?{' '}
-        <button
+        <Button
           type="button"
+          variant="link"
           onClick={resend}
           disabled={state === 'sending' || secondsLeft > 0}
-          className={`${textButtonClassName} tabular-nums`}
+          className="h-auto p-0 tabular-nums disabled:text-muted-foreground"
         >
           {label}
-        </button>
+        </Button>
       </p>
-      {state === 'sent' && <output className="text-emerald-700">We sent you a new code.</output>}
+      {state === 'sent' && <output className="text-success">We sent you a new code.</output>}
       {state === 'failed' && (
-        <p role="alert" className="text-red-700">
+        <p role="alert" className="text-destructive">
           We couldn’t send a new code. Try again.
         </p>
       )}

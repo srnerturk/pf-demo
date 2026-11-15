@@ -1,6 +1,11 @@
 import { useState } from 'react'
 import { useForm } from 'react-hook-form'
-import { FormField, formControlClassName } from '@/shared/ui/FormField'
+import { CircleAlertIcon, CircleCheckIcon } from 'lucide-react'
+import { FormField } from '@/shared/components/FormField'
+import { SubmitButton } from '@/shared/components/SubmitButton'
+import { Alert, AlertDescription } from '@/shared/ui/alert'
+import { Input } from '@/shared/ui/input'
+import { Textarea } from '@/shared/ui/textarea'
 import type { SendContactMessage } from '../application/send-contact-message'
 import {
   MESSAGE_MIN_LENGTH,
@@ -62,60 +67,55 @@ export function ContactForm({ sendContactMessage }: ContactFormProps) {
   })
 
   return (
-    <form onSubmit={onSubmit} noValidate className="flex flex-col gap-5">
+    <form onSubmit={onSubmit} noValidate className="grid gap-5">
       <FormField id="contact-name" label="Name" error={errors.name?.message}>
         {(controlProps) => (
-          <input
+          <Input
             {...controlProps}
             {...register('name', { validate: ruleFor('name', validateName) })}
             type="text"
             autoComplete="name"
-            className={formControlClassName}
           />
         )}
       </FormField>
 
       <FormField id="contact-email" label="Email" error={errors.email?.message}>
         {(controlProps) => (
-          <input
+          <Input
             {...controlProps}
             {...register('email', { validate: ruleFor('email', validateEmail) })}
             type="email"
             autoComplete="email"
-            className={formControlClassName}
           />
         )}
       </FormField>
 
       <FormField id="contact-message" label="Message" error={errors.message?.message}>
         {(controlProps) => (
-          <textarea
+          <Textarea
             {...controlProps}
             {...register('message', { validate: ruleFor('message', validateMessage) })}
             rows={5}
-            className={formControlClassName}
           />
         )}
       </FormField>
 
       {errors.root?.sendFailure && (
-        <p role="alert" className="rounded-lg bg-red-50 px-3 py-2 text-sm text-red-700">
-          {errors.root.sendFailure.message}
-        </p>
+        <Alert variant="destructive">
+          <CircleAlertIcon />
+          <AlertDescription>{errors.root.sendFailure.message}</AlertDescription>
+        </Alert>
       )}
       {wasSent && (
-        <output className="block rounded-lg bg-emerald-50 px-3 py-2 text-sm text-emerald-700">
+        <output className="flex items-center gap-2 rounded-lg border border-success/30 bg-success/10 px-4 py-3 text-sm text-success">
+          <CircleCheckIcon className="size-4 shrink-0" aria-hidden />
           Thanks! Your message has been sent.
         </output>
       )}
 
-      <button
-        type="submit"
-        disabled={isSubmitting}
-        className="rounded-lg bg-indigo-600 px-4 py-2.5 font-medium text-white shadow-sm transition hover:bg-indigo-500 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600 disabled:cursor-not-allowed disabled:opacity-60"
-      >
-        {isSubmitting ? 'Sending…' : 'Send message'}
-      </button>
+      <SubmitButton pending={isSubmitting} pendingLabel="Sending…">
+        Send message
+      </SubmitButton>
     </form>
   )
 }

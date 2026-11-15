@@ -1,15 +1,11 @@
 import { useEffect, useRef, type ClipboardEvent, type KeyboardEvent } from 'react'
+import { Input } from '@/shared/ui/input'
 import { ONE_TIME_CODE_LENGTH } from '../domain/one-time-code'
 import { emptyOneTimeCode } from './one-time-code-digits'
 
 const POSITIONS = emptyOneTimeCode().map((_, index) => index)
 
-const digitBoxClassName =
-  'h-12 w-full min-w-0 rounded-lg border border-slate-300 bg-white text-center text-xl font-semibold tabular-nums ' +
-  'text-slate-900 shadow-sm caret-indigo-600 transition-colors sm:h-14 sm:text-2xl ' +
-  'focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/30 focus:outline-none ' +
-  'disabled:bg-slate-50 disabled:text-slate-400 ' +
-  'aria-invalid:border-red-500 aria-invalid:focus:ring-red-500/30'
+const digitBoxClassName = 'h-12 px-0 text-center text-xl font-semibold tabular-nums caret-primary sm:h-14 sm:text-2xl md:text-2xl'
 
 interface OneTimeCodeInputProps {
   digits: readonly string[]
@@ -90,7 +86,7 @@ export function OneTimeCodeInput({
   return (
     <div className="grid grid-cols-6 gap-2 sm:gap-3">
       {POSITIONS.map((index) => (
-        <input
+        <Input
           key={index}
           ref={(box) => {
             boxes.current[index] = box

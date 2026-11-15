@@ -1,6 +1,6 @@
 # pf-demo
 
-Vite + React 19 + TypeScript + Tailwind CSS v4 + React Hook Form, tested with Vitest and Testing Library.
+Vite + React 19 + TypeScript + Tailwind CSS v4 + shadcn/ui + React Hook Form, tested with Vitest and Testing Library.
 
 ## Scripts
 
@@ -22,9 +22,12 @@ dependencies point **inward only**:
 ```
 src/
 ├── main.tsx                      # Composition root: picks adapters, injects them
-├── index.css                     # Tailwind entry
+├── index.css                     # Tailwind entry + global design tokens (light/dark)
 ├── app/App.tsx                   # Page shell; receives use cases as props
-├── shared/ui/FormField.tsx       # Reusable, feature-agnostic UI
+├── shared/
+│   ├── lib/utils.ts              # cn(): class merging used by every component
+│   ├── ui/                       # shadcn/ui primitives (button, input, card…), owned by us
+│   └── components/               # Our compositions of primitives (FormField, SubmitButton)
 ├── test/setup.ts                 # Vitest + jest-dom setup
 └── features/contact/
     ├── domain/                   # Entities + business rules. Plain TS, no imports from outside.
@@ -36,6 +39,22 @@ src/
 `ui → application → domain` and `infrastructure → application → domain`.
 `oxlint` fails the build if `domain/` or `application/` import React, React Hook
 Form, or an outer layer (see `overrides` in `.oxlintrc.json`).
+
+### UI kit and design tokens
+
+- **Tokens** live in `src/index.css`: semantic CSS variables (`--primary`,
+  `--muted-foreground`, `--destructive`, `--success`, `--radius`…) for light mode
+  and, under `prefers-color-scheme: dark`, for dark mode. `@theme inline` exposes
+  them as Tailwind utilities (`bg-primary`, `text-muted-foreground`). Features use
+  only these semantic utilities, never raw palette colours, so the theme changes in one place.
+- **Primitives** (`shared/ui`) come from shadcn/ui and are configured by
+  `components.json`. Add more with `npx shadcn@latest add <name>`; they land in
+  `src/shared/ui` and import `cn` from `@/shared/lib/utils`.
+- **Compositions** (`shared/components`) combine primitives into app-level
+  building blocks with behaviour of their own, e.g. `FormField` (label, control
+  and error wired for assistive technology) and `SubmitButton` (busy state that
+  blocks double submission).
+- Feature UIs (`features/*/ui`) compose these; they hold no styling constants of their own.
 
 ### The example feature
 
