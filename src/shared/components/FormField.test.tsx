@@ -22,4 +22,21 @@ describe('FormField', () => {
     expect(control).toHaveAttribute('aria-invalid', 'true')
     expect(control).toHaveAccessibleDescription('Enter your email address.')
   })
+
+  it('describes the control with a hint until there is an error', () => {
+    const { rerender } = render(
+      <FormField id="photo" label="Photo" hint="JPEG or PNG">
+        {(controlProps) => <input {...controlProps} />}
+      </FormField>,
+    )
+    expect(screen.getByRole('textbox', { name: 'Photo' })).toHaveAccessibleDescription('JPEG or PNG')
+
+    rerender(
+      <FormField id="photo" label="Photo" hint="JPEG or PNG" error="Too large.">
+        {(controlProps) => <input {...controlProps} />}
+      </FormField>,
+    )
+    expect(screen.getByRole('textbox', { name: 'Photo' })).toHaveAccessibleDescription('Too large.')
+    expect(screen.queryByText('JPEG or PNG')).not.toBeInTheDocument()
+  })
 })

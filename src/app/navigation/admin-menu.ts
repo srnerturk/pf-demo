@@ -5,33 +5,33 @@ import type { MenuSection } from './menu'
 /** The admin panel's side menu. Each item becomes a page; see App. */
 export const adminMenu: readonly MenuSection[] = [
   {
-    label: 'Giriş Kontrolü',
+    labelKey: 'menu.accessControl.title',
     icon: KeyRoundIcon,
     items: [
-      { label: 'Kullanıcılar', path: paths.accessControl.users },
-      { label: 'Roller', path: paths.accessControl.roles },
-      { label: 'Yetkiler', path: paths.accessControl.permissions },
-      { label: 'Oturum Geçmişi', path: paths.accessControl.signInHistory },
+      { labelKey: 'menu.accessControl.users', path: paths.accessControl.users },
+      { labelKey: 'menu.accessControl.roles', path: paths.accessControl.roles },
+      { labelKey: 'menu.accessControl.permissions', path: paths.accessControl.permissions },
+      { labelKey: 'menu.accessControl.signInHistory', path: paths.accessControl.signInHistory },
     ],
   },
   {
-    label: 'Yapılandırma',
+    labelKey: 'menu.configuration.title',
     icon: SlidersHorizontalIcon,
     items: [
-      { label: 'Genel Ayarlar', path: paths.configuration.general },
-      { label: 'POS Tanımları', path: paths.configuration.posTerminals },
-      { label: 'Komisyon Tanımları', path: paths.configuration.commissions },
-      { label: 'Para Birimleri', path: paths.configuration.currencies },
+      { labelKey: 'menu.configuration.general', path: paths.configuration.general },
+      { labelKey: 'menu.configuration.posTerminals', path: paths.configuration.posTerminals },
+      { labelKey: 'menu.configuration.commissions', path: paths.configuration.commissions },
+      { labelKey: 'menu.configuration.currencies', path: paths.configuration.currencies },
     ],
   },
   {
-    label: 'Yönetim',
+    labelKey: 'menu.management.title',
     icon: ListChecksIcon,
     items: [
-      { label: 'Bankalar', path: paths.management.banks },
-      { label: 'Duyurular', path: paths.management.announcements },
-      { label: 'Bildirim Şablonları', path: paths.management.notificationTemplates },
-      { label: 'Sistem Kayıtları', path: paths.management.auditLog },
+      { labelKey: 'menu.management.banks', path: paths.management.banks },
+      { labelKey: 'menu.management.announcements', path: paths.management.announcements },
+      { labelKey: 'menu.management.notificationTemplates', path: paths.management.notificationTemplates },
+      { labelKey: 'menu.management.auditLog', path: paths.management.auditLog },
     ],
   },
 ]

@@ -30,11 +30,12 @@ src/
 │   ├── layouts/                  # Page frames (DashboardLayout: side menu + header with theme switch and sign out)
 │   ├── navigation/               # Side menu: its shape (menu.ts), the admin menu data, SideMenu
 │   ├── pages/                    # Pages that compose features (SignInPage, MenuItemPage)
-│   └── components/               # App-specific pieces (BrandMark)
+│   └── components/               # App-specific pieces (BrandMark, PageHeader)
 ├── shared/
 │   ├── lib/utils.ts              # cn(): class merging used by every component
 │   ├── ui/                       # shadcn/ui primitives (button, input, card…), owned by us
-│   └── components/               # Our compositions of primitives (FormField, SubmitButton)
+│   ├── components/               # Our compositions of primitives (form fields, DataTable…)
+│   └── i18n/                     # Turkish/English: catalogs, I18nProvider, useI18n, LocaleSwitcher
 ├── test/setup.ts                 # Vitest + jest-dom setup
 └── features/contact/
     ├── domain/                   # Entities + business rules. Plain TS, no imports from outside.
@@ -70,7 +71,7 @@ React Router lives only in `app/` and `main.tsx`; features don't know about URLs
 ### Side menu
 
 `app/navigation/admin-menu.ts` lists the menu's sections (Giriş Kontrolü,
-Yapılandırma, Yönetim) and their pages; the URLs come from `paths.ts`. `App`
+Yapılandırma, Yönetim) and their pages as message keys; the URLs come from `paths.ts`. `App`
 turns every menu item into a route that shows `MenuItemPage` (title, breadcrumb,
 empty state) until the page has a feature of its own. To build a page out, point
 its route at a real page instead. `SideMenu` opens on the section of the current
@@ -90,6 +91,25 @@ dashboard header) and remembers the choice:
 - A small inline script in `index.html` applies the same rule before React loads,
   so a dark page doesn't flash light. Keep it in step with the domain rule and the storage key.
 
+### Languages (i18n)
+
+The interface speaks Turkish (default) and English; the switch sits in the dashboard header.
+It lives in `shared/i18n` because shared components (table, pagination, file picker) need
+their own labels too.
+
+- **Catalogs** (`shared/i18n/catalog`): `tr.ts` is the source of truth; `en.ts` is typed
+  `Messages`, so the build fails if English misses a key. A test checks both use the same
+  `{placeholders}`. Group keys by area (`layout`, `menu`, `table`, `form`, `users`…).
+- **Use**: `const { t, locale, formatDateTime } = useI18n()`; `t('users.create.title')`,
+  `t('table.total', { count })`. Keys are type-checked. A `{ one, other }` message picks its
+  plural form with `Intl.PluralRules`.
+- **Rules** (`locale.ts`): a person's choice wins, then the first supported browser
+  language, then Turkish. Remembered through the `LocalePreferenceStore` port
+  (`WebStorageLocalePreferenceStore`, key `pf-demo.locale`); `<html lang>` follows.
+- Domain rules still return violation codes; UIs map codes to message keys.
+- Tests wrap components in `TestI18nProvider` (`src/test/i18n.tsx`, Turkish unless told otherwise).
+- Not translated yet: the sign-in flow (English copy).
+
 ### UI kit and design tokens
 
 - **Tokens** live in `src/index.css`: semantic CSS variables (`--primary`,
@@ -103,8 +123,27 @@ dashboard header) and remembers the choice:
 - **Compositions** (`shared/components`) combine primitives into app-level
   building blocks with behaviour of their own, e.g. `FormField` (label, control
   and error wired for assistive technology) and `SubmitButton` (busy state that
-  blocks double submission).
+  blocks double submission). Form fields: `TextField`, `SelectField`, `PhoneField`,
+  `ImageFileField`, `SearchInput`, all built on `FormField`. Lists: `data-table/DataTable`
+  (columns, sort, selection, loading/empty states; the caller owns paging) and
+  `TablePagination`. Restyle these, not the feature screens.
 - Feature UIs (`features/*/ui`) compose these; they hold no styling constants of their own.
+
+### User management
+
+`features/users` backs Giriş Kontrolü › Kullanıcı Yönetimi (`/access-control/users`,
+page `app/pages/UsersPage.tsx`): search, sort, paging, bulk activate/deactivate, CSV export
+and a create-user modal.
+
+- **Domain**: `User`, `NewUser` rules (`required`, `invalid-email`, `invalid-phone`,
+  `unsupported-photo-type`, `photo-too-large`: JPEG/PNG up to 1024 KB), `UserQuery`.
+- **Application**: one port per capability (`UserFinder`, `UserCreator`,
+  `UserStatusChanger`, `UserGroupCatalog`) and their use cases. Adapters throw
+  `EmailAlreadyInUseError`.
+- **Infrastructure**: `InMemoryUserDirectory` with demo data (`demo-user-directory.ts`, 119
+  users). Swap in an HTTP adapter in `main.tsx` once the API exists.
+- CSV files are written with `shared/lib/csv` and saved through the injected `SaveFile`
+  (`saveFileInBrowser` in `main.tsx`).
 
 ### The example feature
 
