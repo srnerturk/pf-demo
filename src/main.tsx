@@ -41,6 +41,9 @@ const localePreferenceStore = new WebStorageLocalePreferenceStore(window.localSt
 const userDirectory = new HttpUserDirectory({
   baseUrl: import.meta.env.VITE_ADMIN_API_BASE_URL ?? 'https://pf-admin-uat.halkode.com.tr',
   fetch: window.fetch,
+  // Sign-in does not keep the access token yet, so the admin service still answers 401.
+  // Read it from the session once HttpAuthApi takes it from POST /auth/otp/verify.
+  accessToken: () => null,
 })
 // Creating users, changing their status and listing user groups stay in memory until
 // HttpUserDirectory speaks those endpoints: what they change does not reach the listed users.

@@ -6,7 +6,7 @@ interface RecordedRequest {
   url: string
   method: string
   accept: string | null
-  credentials?: RequestCredentials
+  authorization: string | null
 }
 
 /** Stands in for the network: records each request and answers with the given response. */
@@ -17,7 +17,7 @@ function fakeFetch(respond: () => Response) {
       url: String(input),
       method: init?.method ?? 'GET',
       accept: new Headers(init?.headers).get('Accept'),
-      credentials: init?.credentials,
+      authorization: new Headers(init?.headers).get('Authorization'),
     })
     return respond()
   }
@@ -27,8 +27,13 @@ function fakeFetch(respond: () => Response) {
 const json = (body: unknown, status = 200) =>
   new Response(JSON.stringify(body), { status, headers: { 'Content-Type': 'application/json' } })
 
-function makeDirectory(fetch: typeof globalThis.fetch, baseUrl = 'https://admin.example.com') {
-  return new HttpUserDirectory({ baseUrl, fetch })
+const ACCESS_TOKEN = 'eyJhbGciOiJIUzI1NiJ9.signed-in'
+
+function makeDirectory(
+  fetch: typeof globalThis.fetch,
+  { baseUrl = 'https://admin.example.com', accessToken = (): string | null => ACCESS_TOKEN } = {},
+) {
+  return new HttpUserDirectory({ baseUrl, fetch, accessToken })
 }
 
 const activeUser = {
@@ -75,7 +80,7 @@ function usersBody(users: unknown[], total = users.length) {
 
 describe('HTTP user directory', () => {
   describe('finding users', () => {
-    it('asks the users endpoint for one page, sending the session cookie', async () => {
+    it('asks the users endpoint for one page on behalf of the signed-in person', async () => {
       const { fetch, requests } = fakeFetch(() => json(usersBody([])))
 
       await makeDirectory(fetch).find({ ...DEFAULT_USER_QUERY, page: 3, pageSize: 25 })
@@ -85,15 +90,23 @@ describe('HTTP user directory', () => {
           url: 'https://admin.example.com/users?page=3&per_page=25&page_limit=25',
           method: 'GET',
           accept: 'application/json',
-          credentials: 'include',
+          authorization: `Bearer ${ACCESS_TOKEN}`,
         },
       ])
+    })
+
+    it('asks without credentials when nobody is signed in, leaving the refusal to the service', async () => {
+      const { fetch, requests } = fakeFetch(() => json(usersBody([])))
+
+      await makeDirectory(fetch, { accessToken: () => null }).find(DEFAULT_USER_QUERY)
+
+      expect(requests[0].authorization).toBeNull()
     })
 
     it('passes the search along when there is one', async () => {
       const { fetch, requests } = fakeFetch(() => json(usersBody([])))
 
-      await makeDirectory(fetch, 'https://admin.example.com/').find({ ...DEFAULT_USER_QUERY, search: 'cem köylü' })
+      await makeDirectory(fetch, { baseUrl: 'https://admin.example.com/' }).find({ ...DEFAULT_USER_QUERY, search: 'cem köylü' })
 
       expect(requests[0].url).toBe('https://admin.example.com/users?page=1&per_page=10&page_limit=10&s=cem+k%C3%B6yl%C3%BC')
     })

@@ -172,7 +172,8 @@ the service cannot sort, so the columns don't offer to.
   (default `https://pf-admin-uat.halkode.com.tr`) and backs listing and export. `InMemoryUserDirectory`
   (demo data in `demo-user-directory.ts`, 119 users) still backs creating users, changing status
   and user groups, so those changes don't show in the list yet.
-- **Listing** — `GET /users?page&per_page&page_limit[&s]` (with cookies; `s` only when searching,
+- **Listing** — `GET /users?page&per_page&page_limit[&s]` with `Authorization: Bearer {token}` (the
+  token comes from the injected `accessToken`; sign-in doesn't keep one yet, so the service answers 401) (`s` only when searching,
   `page_limit` equals `per_page`) → `{ success: true, data: { users, total, … } }`. Each user becomes
   a `User`: `is_admin_verified` `1`/`2` → `active`/`passive`, `roles` (`"A, B"`) → `['A', 'B']`,
   `created_at`/`updated_at` (no offset) are read as local time. A non-2xx answer or a body that
