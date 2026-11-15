@@ -26,12 +26,12 @@ class PagedFinder implements UserFinder {
 }
 
 describe('exportUsers', () => {
-  it('collects every matching user across pages, keeping the search and order', async () => {
+  it('collects every matching user across pages, keeping the search', async () => {
     const finder = new PagedFinder()
 
-    const exported = await makeExportUsers(finder)({ search: ' first ', sort: { field: 'name', direction: 'asc' } })
+    const exported = await makeExportUsers(finder)({ search: ' first ' })
 
     expect(exported).toEqual(users)
-    expect(finder.queries.every((query) => query.search === 'first' && query.sort.field === 'name')).toBe(true)
+    expect(finder.queries.every((query) => query.search === 'first')).toBe(true)
   })
 })

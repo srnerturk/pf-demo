@@ -3,7 +3,7 @@ import type { UserStatusChanger } from '../application/change-users-status'
 import type { UserGroupCatalog } from '../application/list-user-groups'
 import type { UserFinder } from '../application/list-users'
 import { fullName, type User, type UserGroup, type UserStatus } from '../domain/user'
-import type { UserPage, UserQuery, UserSortField } from '../domain/user-query'
+import type { UserPage, UserQuery } from '../domain/user-query'
 
 /** A user group as the directory stores it: with the roles its members get. */
 export interface DirectoryUserGroup extends UserGroup {
@@ -19,16 +19,10 @@ interface InMemoryUserDirectoryOptions {
 
 const COLLATION_LOCALE = 'tr'
 
-const compareBy: Record<UserSortField, (a: User, b: User) => number> = {
-  id: (a, b) => a.id - b.id,
-  name: (a, b) => fullName(a).localeCompare(fullName(b), COLLATION_LOCALE),
-  email: (a, b) => a.email.localeCompare(b.email, COLLATION_LOCALE),
-  status: (a, b) => a.status.localeCompare(b.status),
-  createdAt: (a, b) => a.createdAt.getTime() - b.createdAt.getTime(),
-  updatedAt: (a, b) => a.updatedAt.getTime() - b.updatedAt.getTime(),
-}
+/** Newest first, as the users service lists them. */
+const newestFirst = (a: User, b: User) => b.id - a.id
 
-/** Stand-in for the users API until it exists; swap it for an HTTP adapter in the composition root. */
+/** Stand-in for the users API in tests and demos, and for the endpoints HttpUserDirectory does not speak yet. */
 export class InMemoryUserDirectory implements UserFinder, UserCreator, UserStatusChanger, UserGroupCatalog {
   private users: User[]
   private readonly groups: readonly DirectoryUserGroup[]
@@ -42,12 +36,9 @@ export class InMemoryUserDirectory implements UserFinder, UserCreator, UserStatu
     this.now = now
   }
 
-  async find({ search, sort, page, pageSize }: UserQuery): Promise<UserPage> {
+  async find({ search, page, pageSize }: UserQuery): Promise<UserPage> {
     await this.respond()
-    const direction = sort.direction === 'asc' ? 1 : -1
-    const matching = this.users
-      .filter((user) => matches(user, search))
-      .sort((a, b) => direction * compareBy[sort.field](a, b))
+    const matching = this.users.filter((user) => matches(user, search)).sort(newestFirst)
     const start = (page - 1) * pageSize
     return { users: matching.slice(start, start + pageSize), total: matching.length }
   }

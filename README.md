@@ -166,16 +166,24 @@ their own labels too.
 ### User management
 
 `features/users` backs Giriş Kontrolü › Kullanıcı Yönetimi (`/access-control/users`,
-page `app/pages/UsersPage.tsx`): search, sort, paging, bulk activate/deactivate, CSV export
-and a create-user modal.
+page `app/pages/UsersPage.tsx`): search, paging, bulk activate/deactivate, CSV export
+and a create-user modal. Users are listed in the order the service keeps them (newest first);
+the service cannot sort, so the columns don't offer to.
 
 - **Domain**: `User`, `NewUser` rules (`required`, `invalid-email`, `invalid-phone`,
   `unsupported-photo-type`, `photo-too-large`: JPEG/PNG up to 1024 KB), `UserQuery`.
 - **Application**: one port per capability (`UserFinder`, `UserCreator`,
   `UserStatusChanger`, `UserGroupCatalog`) and their use cases. Adapters throw
   `EmailAlreadyInUseError`.
-- **Infrastructure**: `InMemoryUserDirectory` with demo data (`demo-user-directory.ts`, 119
-  users). Swap in an HTTP adapter in `main.tsx` once the API exists.
+- **Infrastructure**: `HttpUserDirectory` speaks the PF admin service at `VITE_ADMIN_API_BASE_URL`
+  (default `https://pf-admin-uat.halkode.com.tr`) and backs listing and export. `InMemoryUserDirectory`
+  (demo data in `demo-user-directory.ts`, 119 users) still backs creating users, changing status
+  and user groups, so those changes don't show in the list yet.
+- **Listing** — `GET /users?page&per_page&page_limit[&s]` (with cookies; `s` only when searching,
+  `page_limit` equals `per_page`) → `{ success: true, data: { users, total, … } }`. Each user becomes
+  a `User`: `is_admin_verified` `1`/`2` → `active`/`passive`, `roles` (`"A, B"`) → `['A', 'B']`,
+  `created_at`/`updated_at` (no offset) are read as local time. A non-2xx answer or a body that
+  doesn't fit (including an unknown status code) fails the whole page.
 - CSV files are written with `shared/lib/csv` and saved through the injected `SaveFile`
   (`saveFileInBrowser` in `main.tsx`).
 

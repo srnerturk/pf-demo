@@ -17,6 +17,7 @@ import { makeExportUsers } from '@/features/users/application/export-users'
 import { makeListUserGroups } from '@/features/users/application/list-user-groups'
 import { makeListUsers } from '@/features/users/application/list-users'
 import { demoUserGroups, demoUsers } from '@/features/users/infrastructure/demo-user-directory'
+import { HttpUserDirectory } from '@/features/users/infrastructure/http-user-directory'
 import { InMemoryUserDirectory } from '@/features/users/infrastructure/in-memory-user-directory'
 import { saveFileInBrowser } from '@/shared/lib/save-file'
 import { WebStorageThemePreferenceStore } from '@/features/theme/infrastructure/web-storage-theme-preference-store'
@@ -43,8 +44,13 @@ const sessionStore = new RememberMeSessionStore({
 const themePreferenceStore = new WebStorageThemePreferenceStore(window.localStorage)
 const systemPrefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches
 const localePreferenceStore = new WebStorageLocalePreferenceStore(window.localStorage)
-// Replace the in-memory directory with an HTTP adapter for the users API once it exists.
-const userDirectory = new InMemoryUserDirectory({ users: demoUsers, groups: demoUserGroups, latencyMs: 400 })
+const userDirectory = new HttpUserDirectory({
+  baseUrl: import.meta.env.VITE_ADMIN_API_BASE_URL ?? 'https://pf-admin-uat.halkode.com.tr',
+  fetch: window.fetch,
+})
+// Creating users, changing their status and listing user groups stay in memory until
+// HttpUserDirectory speaks those endpoints: what they change does not reach the listed users.
+const demoUserDirectory = new InMemoryUserDirectory({ users: demoUsers, groups: demoUserGroups, latencyMs: 400 })
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
@@ -62,9 +68,9 @@ createRoot(document.getElementById('root')!).render(
         userManagement={{
           listUsers: makeListUsers(userDirectory),
           exportUsers: makeExportUsers(userDirectory),
-          createUser: makeCreateUser(userDirectory),
-          changeUsersStatus: makeChangeUsersStatus(userDirectory),
-          listUserGroups: makeListUserGroups(userDirectory),
+          createUser: makeCreateUser(demoUserDirectory),
+          changeUsersStatus: makeChangeUsersStatus(demoUserDirectory),
+          listUserGroups: makeListUserGroups(demoUserDirectory),
           saveFile: saveFileInBrowser,
         }}
       />

@@ -44,21 +44,19 @@ describe('InMemoryUserDirectory', () => {
     expect(byFullName.users.map((found) => found.id)).toEqual([1])
   })
 
-  it('sorts by name in Turkish alphabetical order, either way', async () => {
-    const ascending = await directory().find({ ...DEFAULT_USER_QUERY, sort: { field: 'name', direction: 'asc' } })
-    const descending = await directory().find({ ...DEFAULT_USER_QUERY, sort: { field: 'name', direction: 'desc' } })
+  it('lists the newest users first, like the users service', async () => {
+    const page = await directory().find(DEFAULT_USER_QUERY)
 
-    expect(ascending.users.map((found) => found.firstName)).toEqual(['Ekin', 'İlayda', 'Özgür'])
-    expect(descending.users.map((found) => found.firstName)).toEqual(['Özgür', 'İlayda', 'Ekin'])
+    expect(page.users.map((found) => found.id)).toEqual([3, 2, 1])
   })
 
   it('returns one page and the total that matched', async () => {
     const many = Array.from({ length: 23 }, (_, index) => user(index + 1, `User${index + 1}`, 'Test'))
 
-    const page = await directory(many).find({ ...DEFAULT_USER_QUERY, sort: { field: 'id', direction: 'asc' }, page: 3, pageSize: 10 })
+    const page = await directory(many).find({ ...DEFAULT_USER_QUERY, page: 3, pageSize: 10 })
 
     expect(page.total).toBe(23)
-    expect(page.users.map((found) => found.id)).toEqual([21, 22, 23])
+    expect(page.users.map((found) => found.id)).toEqual([3, 2, 1])
   })
 
   it('creates an active user with the next id and the roles of their group', async () => {
@@ -88,8 +86,8 @@ describe('InMemoryUserDirectory', () => {
 
     await users.changeStatus([1, 3], 'passive')
 
-    const { users: all } = await users.find({ ...DEFAULT_USER_QUERY, sort: { field: 'id', direction: 'asc' } })
-    expect(all.map((found) => found.status)).toEqual(['passive', 'active', 'passive'])
+    const { users: all } = await users.find(DEFAULT_USER_QUERY)
+    expect(all.map((found) => [found.id, found.status])).toEqual([[3, 'passive'], [2, 'active'], [1, 'passive']])
     expect(all[0].updatedAt).toEqual(now)
   })
 

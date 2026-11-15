@@ -1,6 +1,6 @@
 import { CircleAlertIcon, CircleCheckIcon, DownloadIcon, PlusIcon } from 'lucide-react'
 import { useMemo, useState } from 'react'
-import { DataTable, type RowId, type TableSort } from '@/shared/components/data-table/DataTable'
+import { DataTable, type RowId } from '@/shared/components/data-table/DataTable'
 import { TablePagination } from '@/shared/components/data-table/TablePagination'
 import { SearchInput } from '@/shared/components/SearchInput'
 import { useI18n } from '@/shared/i18n/useI18n'
@@ -14,7 +14,7 @@ import type { ExportUsers } from '../application/export-users'
 import type { ListUserGroups } from '../application/list-user-groups'
 import type { ListUsers } from '../application/list-users'
 import { fullName, type User, type UserStatus } from '../domain/user'
-import { DEFAULT_USER_QUERY, PAGE_SIZES, type PageSize, type UserQuery, type UserSortField } from '../domain/user-query'
+import { DEFAULT_USER_QUERY, PAGE_SIZES, type PageSize, type UserQuery } from '../domain/user-query'
 import { BulkActionBar } from './BulkActionBar'
 import { CreateUserDialog } from './CreateUserDialog'
 import { useDebouncedValue } from './useDebouncedValue'
@@ -35,11 +35,9 @@ export interface UserManagementProps {
 
 type Feedback = { tone: 'success' | 'error'; message: string } | null
 
-const SORT_FIELDS: readonly string[] = ['id', 'name', 'email', 'status', 'createdAt', 'updatedAt'] satisfies UserSortField[]
-const isUserSortField = (columnId: string): columnId is UserSortField => SORT_FIELDS.includes(columnId)
 const isPageSize = (size: number): size is PageSize => (PAGE_SIZES as readonly number[]).includes(size)
 
-/** The user list: search, sort, page, act on several users at once, export, and add a user. */
+/** The user list: search, page, act on several users at once, export, and add a user. */
 export function UserManagement({
   listUsers,
   exportUsers,
@@ -70,10 +68,6 @@ export function UserManagement({
   const { page, loading, failed, reload } = useUserPage(listUsers, query)
   const users = page?.users ?? []
 
-  const changeSort = ({ columnId, direction }: TableSort) => {
-    if (isUserSortField(columnId)) setView((current) => ({ ...current, sort: { field: columnId, direction }, page: 1 }))
-  }
-
   const changeStatus = async (status: UserStatus) => {
     const ids = [...selectedIds].map(Number)
     setBusy(true)
@@ -92,7 +86,7 @@ export function UserManagement({
   const exportCsv = async () => {
     setBusy(true)
     try {
-      const exported = await exportUsers({ search, sort: view.sort })
+      const exported = await exportUsers({ search })
       saveFile({
         name: `${t('users.exportFileName')}-${timestamp(new Date()).slice(0, 10)}.csv`,
         content: usersCsv(exported, t),
@@ -174,8 +168,6 @@ export function UserManagement({
             rows={users}
             getRowId={(user) => user.id}
             getRowLabel={(user) => fullName(user)}
-            sort={{ columnId: view.sort.field, direction: view.sort.direction }}
-            onSortChange={changeSort}
             selectedIds={selectedIds}
             onSelectedIdsChange={setSelectedIds}
             loading={loading}

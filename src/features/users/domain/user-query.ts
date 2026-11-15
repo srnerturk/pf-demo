@@ -1,20 +1,11 @@
 import type { User } from './user'
 
-export type UserSortField = 'id' | 'name' | 'email' | 'status' | 'createdAt' | 'updatedAt'
-export type SortDirection = 'asc' | 'desc'
-
-export interface UserSort {
-  field: UserSortField
-  direction: SortDirection
-}
-
 export const PAGE_SIZES = [10, 25, 50] as const
 export type PageSize = (typeof PAGE_SIZES)[number]
 
-/** Which users to show: matching `search` (name or email), in `sort` order, one page at a time. */
+/** Which users to show: matching `search` (name or email), one page at a time, in the order the directory keeps them. */
 export interface UserQuery {
   search: string
-  sort: UserSort
   /** 1-based. */
   page: number
   pageSize: PageSize
@@ -28,7 +19,6 @@ export interface UserPage {
 
 export const DEFAULT_USER_QUERY: UserQuery = {
   search: '',
-  sort: { field: 'id', direction: 'desc' },
   page: 1,
   pageSize: 10,
 }
