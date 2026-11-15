@@ -59,10 +59,22 @@ React Router lives only in `app/` and `main.tsx`; features don't know about URLs
 | side-menu pages (`/access-control/*`, `/configuration/*`, `/management/*`) | Signed in | Signed-out people go to `/auth/login` |
 | anything else | —              | Sent to `/`, then guarded as above |
 
+<<<<<<< HEAD
 - `SessionProvider` (`features/auth/ui`) holds who is signed in and exposes
   `useSession()` → `{ session, startSession, endSession }`. It remembers the
   session through the `SessionStore` port; `WebStorageSessionStore` backs it
   with `localStorage` in `main.tsx`.
+=======
+- A `Session` is `{ user: { id, name, email }, tokens: { accessToken, refreshToken, expiresAt }, remember }`.
+  It ends when the access token expires (`hasExpired`); there is no refresh yet.
+- `SessionProvider` (`features/auth/ui`) holds who is signed in and exposes
+  `useSession()` → `{ session, startSession, endSession }`. It remembers the
+  session through the `SessionStore` port, forgets an expired one instead of restoring it,
+  and ends the session when it expires while the app is open.
+- In `main.tsx`, `RememberMeSessionStore` keeps a session in `localStorage` when the person
+  ticked "Remember me", otherwise in `sessionStorage` (gone when the tab closes); both through
+  `WebStorageSessionStore` (key `pf-demo.session`), which ignores stored data of another shape.
+>>>>>>> development
 - Guards only read the session. Signing in or out changes the session and the
   guards redirect, so pages never navigate by hand.
 - `App` expects to be rendered inside a router: `BrowserRouter` in `main.tsx`,
@@ -89,10 +101,16 @@ The PF auth service lives at `VITE_AUTH_API_BASE_URL` (default `https://pf-auth-
   A `200` without `otp_required` isn't supported yet and shows as a general failure.
 - **One-time code** — `POST /auth/otp/verify` (with cookies) sends `{ client_type: "admin", otp, user_id }`.
   `400`/`401`/`422 { error }` (wrong or expired code) becomes `OneTimeCodeRejectedError`. A `200`
+<<<<<<< HEAD
   opens the session with its `access_token` (`Session { email, accessToken }`); a `200` without one
   fails. `refresh_token` and `expires_in` aren't used yet: after the token expires (about an hour),
   the PF services answer 401 until the person signs in again. Sessions saved before access tokens
   existed are ignored, so their owners sign in again. When login hands back `otp_code` (UAT does), the code screen opens
+=======
+  `{ access_token, refresh_token, expires_in, user: { id, name, email, … } }` opens the session
+  (`expiresAt` = now + `expires_in` seconds); other fields (`redirect_url`, `session_time`,
+  `user.language`…) aren't used yet. When login hands back `otp_code` (UAT does), the code screen opens
+>>>>>>> development
   with it filled in. Resending is not wired yet: `InMemoryAuthenticator` only pretends to resend.
 - **Device** — `WebStorageDeviceId` creates this browser's `device_id` once and keeps it in
   `localStorage` (key `pf-demo.device-id`); it falls back to one id per visit when storage is blocked.
@@ -175,8 +193,12 @@ the service cannot sort, so the columns don't offer to.
   (default `https://pf-admin-uat.halkode.com.tr`) and backs listing and export. `InMemoryUserDirectory`
   (demo data in `demo-user-directory.ts`, 119 users) still backs creating users, changing status
   and user groups, so those changes don't show in the list yet.
+<<<<<<< HEAD
 - **Listing** — `GET /users?page&per_page&page_limit[&s]` with `Authorization: Bearer {token}` (the
   session's access token, read through the injected `accessToken`) (`s` only when searching,
+=======
+- **Listing** — `GET /users?page&per_page&page_limit[&s]` (with cookies; `s` only when searching,
+>>>>>>> development
   `page_limit` equals `per_page`) → `{ success: true, data: { users, total, … } }`. Each user becomes
   a `User`: `is_admin_verified` `1`/`2` → `active`/`passive`, `roles` (`"A, B"`) → `['A', 'B']`,
   `created_at`/`updated_at` (no offset) are read as local time. A non-2xx answer or a body that

@@ -6,8 +6,11 @@ interface HttpUserDirectoryOptions {
   /** Where the admin service lives, e.g. https://pf-admin-uat.halkode.com.tr */
   baseUrl: string
   fetch: typeof globalThis.fetch
+<<<<<<< HEAD
   /** The signed-in person's access token, or null when nobody is signed in. */
   accessToken: () => string | null
+=======
+>>>>>>> development
 }
 
 /** Wire format of one user in GET /users. Only the fields this app reads. */
@@ -38,6 +41,7 @@ const ROLE_SEPARATOR = ','
 export class HttpUserDirectory implements UserFinder {
   private readonly baseUrl: string
   private readonly send: typeof globalThis.fetch
+<<<<<<< HEAD
   private readonly accessToken: () => string | null
 
   constructor({ baseUrl, fetch, accessToken }: HttpUserDirectoryOptions) {
@@ -45,13 +49,29 @@ export class HttpUserDirectory implements UserFinder {
     // Called on its own, never as a method of this object: browsers reject `fetch` with a foreign `this`.
     this.send = (input, init) => fetch(input, init)
     this.accessToken = accessToken
+=======
+
+  constructor({ baseUrl, fetch }: HttpUserDirectoryOptions) {
+    this.baseUrl = baseUrl.endsWith('/') ? baseUrl : `${baseUrl}/`
+    // Called on its own, never as a method of this object: browsers reject `fetch` with a foreign `this`.
+    this.send = (input, init) => fetch(input, init)
+>>>>>>> development
   }
 
   async find({ search, page, pageSize }: UserQuery): Promise<UserPage> {
     const params = new URLSearchParams({ page: String(page), per_page: String(pageSize), page_limit: String(pageSize) })
     if (search !== '') params.set('s', search)
 
+<<<<<<< HEAD
     const response = await this.send(this.url(`users?${params}`), { method: 'GET', headers: this.headers() })
+=======
+    const response = await this.send(this.url(`users?${params}`), {
+      method: 'GET',
+      headers: { Accept: 'application/json' },
+      // The admin service knows who is asking from the session cookie set at sign-in.
+      credentials: 'include',
+    })
+>>>>>>> development
     if (!response.ok) throw new Error(`The admin service answered GET /users with ${response.status}`)
 
     const body: unknown = await response.json()
@@ -59,12 +79,15 @@ export class HttpUserDirectory implements UserFinder {
     return { users: body.data.users.map(toUser), total: body.data.total }
   }
 
+<<<<<<< HEAD
   /** The admin service knows who is asking from the bearer token; without one it refuses with 401. */
   private headers(): Record<string, string> {
     const token = this.accessToken()
     return token === null ? { Accept: 'application/json' } : { Accept: 'application/json', Authorization: `Bearer ${token}` }
   }
 
+=======
+>>>>>>> development
   private url(path: string): string {
     return new URL(path, this.baseUrl).toString()
   }

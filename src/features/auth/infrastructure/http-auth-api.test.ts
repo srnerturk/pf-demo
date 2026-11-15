@@ -33,8 +33,15 @@ const json = (body: unknown, status = 200) =>
 
 const DEVICE_ID = '1adad3ef-bea8-40a3-8a64-11188e16fece'
 
+<<<<<<< HEAD
 function makeApi(fetch: typeof globalThis.fetch, baseUrl = 'https://auth.example.com') {
   return new HttpAuthApi({ baseUrl, fetch, deviceId: () => DEVICE_ID })
+=======
+const NOW = Date.UTC(2026, 10, 15, 12, 0, 0)
+
+function makeApi(fetch: typeof globalThis.fetch, baseUrl = 'https://auth.example.com') {
+  return new HttpAuthApi({ baseUrl, fetch, deviceId: () => DEVICE_ID, now: () => NOW })
+>>>>>>> development
 }
 
 const captchaBody = { captcha_key: '4b8730977b9f4bed9fe43419fb26a839', image: 'data:image/png;base64,iVBORw0KGgo=' }
@@ -117,7 +124,11 @@ describe('HTTP auth API', () => {
 
       const challenge = await makeApi(fetch).verifyCredentials(attempt)
 
+<<<<<<< HEAD
       expect(challenge).toEqual({ id: '2763', email: 'ada@example.com', revealedCode: '949661' })
+=======
+      expect(challenge).toEqual({ id: '2763', email: 'ada@example.com', remember: true, revealedCode: '949661' })
+>>>>>>> development
     })
 
     it('keeps the code hidden when the service does not hand it back', async () => {
@@ -126,7 +137,11 @@ describe('HTTP auth API', () => {
 
       const challenge = await makeApi(fetch).verifyCredentials(attempt)
 
+<<<<<<< HEAD
       expect(challenge).toEqual({ id: '2763', email: 'ada@example.com' })
+=======
+      expect(challenge).toEqual({ id: '2763', email: 'ada@example.com', remember: true })
+>>>>>>> development
     })
 
     it('reports wrong credentials when the service answers 401', async () => {
@@ -155,6 +170,7 @@ describe('HTTP auth API', () => {
   })
 
   describe('verifying a one-time code', () => {
+<<<<<<< HEAD
     const challenge: SignInChallenge = { id: '2763', email: 'ada@example.com' }
 
     /** What the service answers when the code is right, trimmed to what matters here. */
@@ -173,6 +189,27 @@ describe('HTTP auth API', () => {
       const session = await makeApi(fetch).verifyCode(challenge, '535744')
 
       expect(session).toEqual({ email: 'ada@example.com', accessToken: 'header.payload.signature' })
+=======
+    const challenge: SignInChallenge = { id: '2763', email: 'ada@example.com', remember: true }
+
+    /** What the service answers once the code is right (trimmed to what matters here). */
+    const verifiedBody = {
+      success: true,
+      redirect_url: '/home',
+      access_token: 'eyJ.access.token',
+      refresh_token: 'refresh-token',
+      expires_in: 3599,
+      session_time: 15,
+      last_failed_login_message: null,
+      user: { id: 2763, first_name: 'Ada', last_name: 'Lovelace', name: 'Ada Lovelace', email: 'ada@example.com' },
+    }
+
+    it('posts the code for the challenged user, with cookies', async () => {
+      const { fetch, requests } = fakeFetch(() => json(verifiedBody))
+
+      await makeApi(fetch).verifyCode(challenge, '535744')
+
+>>>>>>> development
       expect(requests).toEqual([
         {
           url: 'https://auth.example.com/auth/otp/verify',
@@ -184,6 +221,27 @@ describe('HTTP auth API', () => {
       ])
     })
 
+<<<<<<< HEAD
+=======
+    it('opens a session for the user with their tokens, expiring when the access token does', async () => {
+      const { fetch } = fakeFetch(() => json(verifiedBody))
+
+      const session = await makeApi(fetch).verifyCode(challenge, '535744')
+
+      expect(session).toEqual({
+        user: { id: '2763', name: 'Ada Lovelace', email: 'ada@example.com' },
+        tokens: { accessToken: 'eyJ.access.token', refreshToken: 'refresh-token', expiresAt: NOW + 3599 * 1000 },
+        remember: true,
+      })
+    })
+
+    it('fails when the answer carries no tokens', async () => {
+      const { fetch } = fakeFetch(() => json({ success: true, user: verifiedBody.user }))
+
+      await expect(makeApi(fetch).verifyCode(challenge, '535744')).rejects.toThrow('session')
+    })
+
+>>>>>>> development
     it.each([400, 401, 422])('reports a wrong or expired code when the service answers %i', async (status) => {
       const { fetch } = fakeFetch(() => json({ error: 'Doğrulama kodunun süresi dolmuş veya geçersiz' }, status))
 
@@ -195,11 +253,14 @@ describe('HTTP auth API', () => {
 
       await expect(makeApi(fetch).verifyCode(challenge, '535744')).rejects.toThrow('500')
     })
+<<<<<<< HEAD
 
     it('fails when the service accepts the code but hands back no access token', async () => {
       const { fetch } = fakeFetch(() => json({ success: true }))
 
       await expect(makeApi(fetch).verifyCode(challenge, '535744')).rejects.toThrow('access token')
     })
+=======
+>>>>>>> development
   })
 })

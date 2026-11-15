@@ -6,16 +6,30 @@ import type { ResendOneTimeCode } from '../application/resend-one-time-code'
 import type { SignIn } from '../application/sign-in'
 import type { VerifyOneTimeCode } from '../application/verify-one-time-code'
 import type { Session } from '../domain/authentication'
+<<<<<<< HEAD
 import { SignInFlow } from './SignInFlow'
 
+=======
+import { aSession } from '../testing/session-fixtures'
+import { SignInFlow } from './SignInFlow'
+
+const session = aSession()
+
+>>>>>>> development
 function renderFlow() {
   const user = userEvent.setup()
   const onSignedIn = vi.fn<(session: Session) => void>()
   render(
     <SignInFlow
+<<<<<<< HEAD
       signIn={vi.fn<SignIn>().mockResolvedValue({ id: 'challenge-1', email: 'ada@example.com' })}
       requestCaptcha={vi.fn<RequestCaptcha>().mockResolvedValue({ key: 'captcha-1', image: 'data:image/png;base64,AAAA' })}
       verifyOneTimeCode={vi.fn<VerifyOneTimeCode>().mockResolvedValue({ email: 'ada@example.com', accessToken: 'token' })}
+=======
+      signIn={vi.fn<SignIn>().mockResolvedValue({ id: 'challenge-1', email: 'ada@example.com', remember: false })}
+      requestCaptcha={vi.fn<RequestCaptcha>().mockResolvedValue({ key: 'captcha-1', image: 'data:image/png;base64,AAAA' })}
+      verifyOneTimeCode={vi.fn<VerifyOneTimeCode>().mockResolvedValue(session)}
+>>>>>>> development
       resendOneTimeCode={vi.fn<ResendOneTimeCode>().mockResolvedValue(undefined)}
       onSignedIn={onSignedIn}
     />,
@@ -48,7 +62,11 @@ describe('SignInFlow', () => {
     await user.keyboard('123456')
     await user.click(screen.getByRole('button', { name: 'Verify' }))
 
+<<<<<<< HEAD
     await waitFor(() => expect(onSignedIn).toHaveBeenCalledWith({ email: 'ada@example.com', accessToken: 'token' }))
+=======
+    await waitFor(() => expect(onSignedIn).toHaveBeenCalledWith(session))
+>>>>>>> development
   })
 
   it('goes back to the sign-in screen to use a different email', async () => {

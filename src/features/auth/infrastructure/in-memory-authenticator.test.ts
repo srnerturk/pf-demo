@@ -4,6 +4,7 @@ import { OneTimeCodeRejectedError } from '../application/verify-one-time-code'
 import type { SignInAttempt } from '../domain/authentication'
 import { InMemoryAuthenticator } from './in-memory-authenticator'
 
+<<<<<<< HEAD
 const account = { email: 'ada@example.com', password: 'password123', oneTimeCode: '123456' }
 
 /** The in-memory authenticator checks only the credentials; any captcha answer and choice to be remembered will do. */
@@ -11,6 +12,16 @@ const attemptWith = (email: string, password: string): SignInAttempt => ({
   credentials: { email, password },
   captcha: { key: 'captcha-1', text: 'ANY' },
   remember: false,
+=======
+const account = { name: 'Ada Lovelace', email: 'ada@example.com', password: 'password123', oneTimeCode: '123456' }
+const NOW = Date.UTC(2026, 10, 15, 12, 0, 0)
+
+/** The in-memory authenticator checks only the credentials; any captcha answer and choice to be remembered will do. */
+const attemptWith = (email: string, password: string, remember = false): SignInAttempt => ({
+  credentials: { email, password },
+  captcha: { key: 'captcha-1', text: 'ANY' },
+  remember,
+>>>>>>> development
 })
 
 describe('in-memory authenticator', () => {
@@ -19,7 +30,11 @@ describe('in-memory authenticator', () => {
 
     const challenge = await authenticator.verifyCredentials(attemptWith(account.email, account.password))
 
+<<<<<<< HEAD
     expect(challenge).toEqual({ id: expect.any(String), email: account.email })
+=======
+    expect(challenge).toEqual({ id: expect.any(String), email: account.email, remember: false })
+>>>>>>> development
   })
 
   it('matches the email case-insensitively', async () => {
@@ -46,6 +61,7 @@ describe('in-memory authenticator', () => {
     ).rejects.toBeInstanceOf(CredentialsRejectedError)
   })
 
+<<<<<<< HEAD
   it('opens a session when the challenge is answered with the right code', async () => {
     const authenticator = new InMemoryAuthenticator({ account })
     const challenge = await authenticator.verifyCredentials(attemptWith(account.email, account.password))
@@ -53,6 +69,16 @@ describe('in-memory authenticator', () => {
     await expect(authenticator.verifyCode(challenge, account.oneTimeCode)).resolves.toEqual({
       email: account.email,
       accessToken: expect.any(String),
+=======
+  it('opens an hour-long session when the challenge is answered with the right code', async () => {
+    const authenticator = new InMemoryAuthenticator({ account, now: () => NOW })
+    const challenge = await authenticator.verifyCredentials(attemptWith(account.email, account.password, true))
+
+    await expect(authenticator.verifyCode(challenge, account.oneTimeCode)).resolves.toEqual({
+      user: { id: expect.any(String), name: account.name, email: account.email },
+      tokens: { accessToken: expect.any(String), refreshToken: expect.any(String), expiresAt: NOW + 60 * 60 * 1000 },
+      remember: true,
+>>>>>>> development
     })
   })
 
@@ -76,7 +102,11 @@ describe('in-memory authenticator', () => {
   it('rejects a code for a challenge it never issued', async () => {
     const authenticator = new InMemoryAuthenticator({ account })
 
+<<<<<<< HEAD
     await expect(authenticator.verifyCode({ id: 'unknown', email: account.email }, account.oneTimeCode)).rejects.toBeInstanceOf(
+=======
+    await expect(authenticator.verifyCode({ id: 'unknown', email: account.email, remember: false }, account.oneTimeCode)).rejects.toBeInstanceOf(
+>>>>>>> development
       OneTimeCodeRejectedError,
     )
   })
