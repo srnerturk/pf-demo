@@ -27,8 +27,9 @@ src/
 │   ├── App.tsx                   # Routes and who may see them; receives use cases as props
 │   ├── paths.ts                  # Every URL the app answers to
 │   ├── routing/                  # Route guards (RequireSession, RedirectIfSignedIn)
-│   ├── layouts/                  # Page frames (DashboardLayout: header + sign out)
-│   ├── pages/                    # Pages that compose features (SignInPage)
+│   ├── layouts/                  # Page frames (DashboardLayout: side menu + header with theme switch and sign out)
+│   ├── navigation/               # Side menu: its shape (menu.ts), the admin menu data, SideMenu
+│   ├── pages/                    # Pages that compose features (SignInPage, MenuItemPage)
 │   └── components/               # App-specific pieces (BrandMark)
 ├── shared/
 │   ├── lib/utils.ts              # cn(): class merging used by every component
@@ -54,6 +55,7 @@ React Router lives only in `app/` and `main.tsx`; features don't know about URLs
 | ------------- | -------------- | --------------------------------- |
 | `/auth/login` | Signed out     | Signed-in people are sent to `/`  |
 | `/`           | Signed in      | Signed-out people go to `/auth/login` |
+| side-menu pages (`/access-control/*`, `/configuration/*`, `/management/*`) | Signed in | Signed-out people go to `/auth/login` |
 | anything else | —              | Sent to `/`, then guarded as above |
 
 - `SessionProvider` (`features/auth/ui`) holds who is signed in and exposes
@@ -65,11 +67,34 @@ React Router lives only in `app/` and `main.tsx`; features don't know about URLs
 - `App` expects to be rendered inside a router: `BrowserRouter` in `main.tsx`,
   `MemoryRouter` with `initialEntries` in tests.
 
+### Side menu
+
+`app/navigation/admin-menu.ts` lists the menu's sections (Giriş Kontrolü,
+Yapılandırma, Yönetim) and their pages; the URLs come from `paths.ts`. `App`
+turns every menu item into a route that shows `MenuItemPage` (title, breadcrumb,
+empty state) until the page has a feature of its own. To build a page out, point
+its route at a real page instead. `SideMenu` opens on the section of the current
+page. Below `lg` the menu slides over the page from the header's menu button.
+
+### Theme
+
+`features/theme` lets a person switch between light and dark (the button in the
+dashboard header) and remembers the choice:
+
+- **Domain** (`theme.ts`): a person's choice wins; until they make one, the
+  operating system preference decides (`initialTheme`).
+- **Port** `ThemePreferenceStore`, backed by `WebStorageThemePreferenceStore`
+  (`localStorage`, key `pf-demo.theme`) in `main.tsx`.
+- **UI**: `ThemeProvider` wraps the whole app and puts the `dark` class on
+  `<html>`; `useTheme()` → `{ theme, toggleTheme }`; `ThemeToggle` is the button.
+- A small inline script in `index.html` applies the same rule before React loads,
+  so a dark page doesn't flash light. Keep it in step with the domain rule and the storage key.
+
 ### UI kit and design tokens
 
 - **Tokens** live in `src/index.css`: semantic CSS variables (`--primary`,
-  `--muted-foreground`, `--destructive`, `--success`, `--radius`…) for light mode
-  and, under `prefers-color-scheme: dark`, for dark mode. `@theme inline` exposes
+  `--muted-foreground`, `--destructive`, `--success`, `--sidebar-*`, `--radius`…) for light mode
+  and, under the `.dark` class, for dark mode. `@theme inline` exposes
   them as Tailwind utilities (`bg-primary`, `text-muted-foreground`). Features use
   only these semantic utilities, never raw palette colours, so the theme changes in one place.
 - **Primitives** (`shared/ui`) come from shadcn/ui and are configured by

@@ -7,6 +7,7 @@ import { makeSignIn } from '@/features/auth/application/sign-in'
 import { makeVerifyOneTimeCode } from '@/features/auth/application/verify-one-time-code'
 import { InMemoryAuthenticator } from '@/features/auth/infrastructure/in-memory-authenticator'
 import { WebStorageSessionStore } from '@/features/auth/infrastructure/web-storage-session-store'
+import { WebStorageThemePreferenceStore } from '@/features/theme/infrastructure/web-storage-theme-preference-store'
 import { App } from './App'
 
 const account = { email: 'ada@example.com', password: 'password123', oneTimeCode: '123456' }
@@ -28,6 +29,8 @@ function renderApp({ at = '/', signedInAs }: { at?: string; signedInAs?: string 
         verifyOneTimeCode={makeVerifyOneTimeCode(authenticator)}
         resendOneTimeCode={makeResendOneTimeCode(authenticator)}
         sessionStore={sessionStore}
+        themePreferenceStore={new WebStorageThemePreferenceStore(window.localStorage)}
+        systemPrefersDark={false}
         footnote="Demo account details"
       />
       <CurrentPath />
@@ -41,6 +44,7 @@ const currentPath = () => screen.getByRole('status', { name: 'Current path' })
 describe('App', () => {
   beforeEach(() => {
     window.localStorage.clear()
+    document.documentElement.classList.remove('dark')
   })
 
   it('sends a signed-out visitor to the sign-in page', () => {
@@ -110,5 +114,42 @@ describe('App', () => {
     renderApp({ at: '/auth/login' })
 
     expect(screen.getByText('Demo account details')).toBeInTheDocument()
+  })
+
+  it('opens a page from the side menu', async () => {
+    const { user } = renderApp({ at: '/', signedInAs: account.email })
+    const menu = screen.getByRole('navigation', { name: 'Ana menü' })
+
+    await user.click(within(menu).getByRole('button', { name: 'Giriş Kontrolü' }))
+    await user.click(within(menu).getByRole('link', { name: 'Kullanıcılar' }))
+
+    expect(currentPath()).toHaveTextContent('/access-control/users')
+    expect(screen.getByRole('heading', { name: 'Kullanıcılar' })).toBeInTheDocument()
+    const breadcrumb = screen.getByRole('navigation', { name: 'Breadcrumb' })
+    expect(within(breadcrumb).getByRole('link', { name: 'Dashboard' })).toHaveAttribute('href', '/')
+    expect(breadcrumb).toHaveTextContent('Giriş Kontrolü')
+  })
+
+  it('offers the configuration and management sections in the side menu', () => {
+    renderApp({ at: '/', signedInAs: account.email })
+    const menu = screen.getByRole('navigation', { name: 'Ana menü' })
+
+    expect(within(menu).getByRole('button', { name: 'Yapılandırma' })).toBeInTheDocument()
+    expect(within(menu).getByRole('button', { name: 'Yönetim' })).toBeInTheDocument()
+  })
+
+  it('sends a signed-out visitor from a menu page to the sign-in page', () => {
+    renderApp({ at: '/access-control/users' })
+
+    expect(currentPath()).toHaveTextContent('/auth/login')
+  })
+
+  it('switches the dashboard to the dark theme and remembers it for the next visit', async () => {
+    const { user } = renderApp({ at: '/', signedInAs: account.email })
+
+    await user.click(within(screen.getByRole('banner')).getByRole('button', { name: 'Switch to dark theme' }))
+
+    expect(document.documentElement).toHaveClass('dark')
+    expect(new WebStorageThemePreferenceStore(window.localStorage).load()).toBe('dark')
   })
 })
