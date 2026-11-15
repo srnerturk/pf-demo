@@ -4,10 +4,11 @@ import { describe, expect, it, vi } from 'vitest'
 import type { ResendOneTimeCode } from '../application/resend-one-time-code'
 import { OneTimeCodeRejectedError, type VerifyOneTimeCode } from '../application/verify-one-time-code'
 import type { Session, SignInChallenge } from '../domain/authentication'
+import { aSession } from '../testing/session-fixtures'
 import { OneTimeCodeForm } from './OneTimeCodeForm'
 
-const challenge: SignInChallenge = { id: 'challenge-1', email: 'ada@example.com' }
-const session: Session = { email: 'ada@example.com' }
+const challenge: SignInChallenge = { id: 'challenge-1', email: 'ada@example.com', remember: false }
+const session: Session = aSession()
 
 interface Overrides {
   challenge?: SignInChallenge

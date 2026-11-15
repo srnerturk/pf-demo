@@ -10,6 +10,8 @@ interface HttpAuthApiOptions {
   fetch: typeof globalThis.fetch
   /** This browser's id, sent with every sign-in. */
   deviceId: () => string
+  /** The current time in milliseconds since the epoch; turns `expires_in` into a moment. */
+  now: () => number
 }
 
 /** Wire format of GET /auth/captcha. */
@@ -46,6 +48,15 @@ interface OtpVerifyRequest {
   user_id: number
 }
 
+/** Wire format of a 200 from POST /auth/otp/verify (fields the app uses). */
+interface OtpVerifiedResponse {
+  access_token: string
+  refresh_token: string
+  /** Seconds until the access token stops working. */
+  expires_in: number
+  user: { id: number; name: string; email: string }
+}
+
 /** Statuses with which /auth/otp/verify turns down a wrong or expired code. */
 const CODE_REJECTED_STATUSES = new Set([400, 401, 422])
 
@@ -54,12 +65,14 @@ export class HttpAuthApi implements CaptchaIssuer, CredentialVerifier, OneTimeCo
   private readonly baseUrl: string
   private readonly send: typeof globalThis.fetch
   private readonly deviceId: () => string
+  private readonly now: () => number
 
-  constructor({ baseUrl, fetch, deviceId }: HttpAuthApiOptions) {
+  constructor({ baseUrl, fetch, deviceId, now }: HttpAuthApiOptions) {
     this.baseUrl = baseUrl.endsWith('/') ? baseUrl : `${baseUrl}/`
     // Called on its own, never as a method of this object: browsers reject `fetch` with a foreign `this`.
     this.send = (input, init) => fetch(input, init)
     this.deviceId = deviceId
+    this.now = now
   }
 
   async issueCaptcha(): Promise<Captcha> {
@@ -93,7 +106,7 @@ export class HttpAuthApi implements CaptchaIssuer, CredentialVerifier, OneTimeCo
       throw new Error('The auth service signed in without a one-time code, which this app does not support yet')
     }
     // The challenge token itself travels as an httponly cookie; the user id is what verifying needs.
-    const challenge: SignInChallenge = { id: String(body.user_id), email: credentials.email }
+    const challenge: SignInChallenge = { id: String(body.user_id), email: credentials.email, remember }
     if (body.otp_code !== undefined) challenge.revealedCode = body.otp_code
     return challenge
   }
@@ -104,7 +117,18 @@ export class HttpAuthApi implements CaptchaIssuer, CredentialVerifier, OneTimeCo
 
     if (CODE_REJECTED_STATUSES.has(response.status)) throw new OneTimeCodeRejectedError()
     if (!response.ok) throw unexpectedStatus('POST /auth/otp/verify', response)
-    return { email: challenge.email }
+
+    const body: unknown = await response.json()
+    if (!isOtpVerifiedResponse(body)) throw new Error('The auth service did not answer with a session')
+    return {
+      user: { id: String(body.user.id), name: body.user.name, email: body.user.email },
+      tokens: {
+        accessToken: body.access_token,
+        refreshToken: body.refresh_token,
+        expiresAt: this.now() + body.expires_in * 1000,
+      },
+      remember: challenge.remember,
+    }
   }
 
   /** Sign-in steps share a cookie (set by login, read by verify), so they always send credentials. */
@@ -138,4 +162,13 @@ function isOtpRequiredResponse(body: unknown): body is OtpRequiredResponse {
   return (
     otp_required === true && typeof user_id === 'number' && (otp_code === undefined || typeof otp_code === 'string')
   )
+}
+
+function isOtpVerifiedResponse(body: unknown): body is OtpVerifiedResponse {
+  if (typeof body !== 'object' || body === null) return false
+  const { access_token, refresh_token, expires_in, user } = body as Record<string, unknown>
+  if (typeof access_token !== 'string' || typeof refresh_token !== 'string' || typeof expires_in !== 'number') return false
+  if (typeof user !== 'object' || user === null) return false
+  const { id, name, email } = user as Record<string, unknown>
+  return typeof id === 'number' && typeof name === 'string' && typeof email === 'string'
 }

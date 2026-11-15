@@ -6,7 +6,7 @@ class RecordingVerifier implements CredentialVerifier {
   readonly received: SignInAttempt[] = []
   async verifyCredentials(attempt: SignInAttempt): Promise<SignInChallenge> {
     this.received.push(attempt)
-    return { id: 'challenge-1', email: attempt.credentials.email }
+    return { id: 'challenge-1', email: attempt.credentials.email, remember: attempt.remember }
   }
 }
 
@@ -27,7 +27,7 @@ describe('sign in', () => {
       remember: true,
     })
 
-    expect(challenge).toEqual({ id: 'challenge-1', email: 'ada@example.com' })
+    expect(challenge).toEqual({ id: 'challenge-1', email: 'ada@example.com', remember: true })
     expect(verifier.received).toEqual([
       {
         credentials: { email: 'ada@example.com', password: ' secret password ' },

@@ -1,7 +1,8 @@
 import { beforeEach, describe, expect, it } from 'vitest'
+import { aSession } from '../testing/session-fixtures'
 import { WebStorageSessionStore } from './web-storage-session-store'
 
-const session = { email: 'ada@example.com' }
+const session = aSession()
 
 describe('WebStorageSessionStore', () => {
   beforeEach(() => {
@@ -30,6 +31,8 @@ describe('WebStorageSessionStore', () => {
   it.each([
     ['not JSON', '{'],
     ['not a session', '{"name":"ada"}'],
+    ['a session from before tokens were kept', '{"email":"ada@example.com"}'],
+    ['a session without tokens', JSON.stringify({ ...aSession(), tokens: undefined })],
     ['null', 'null'],
   ])('ignores stored data that is %s', (_, stored) => {
     window.localStorage.setItem(WebStorageSessionStore.storageKey, stored)
