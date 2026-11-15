@@ -7,7 +7,11 @@ import type { SignInChallenge } from '../domain/authentication'
 import type { Captcha } from '../domain/captcha'
 import { SignInForm } from './SignInForm'
 
+<<<<<<< HEAD
+const challenge: SignInChallenge = { id: 'challenge-1', email: 'ada@example.com' }
+=======
 const challenge: SignInChallenge = { id: 'challenge-1', email: 'ada@example.com', remember: false }
+>>>>>>> development
 const validInput = { email: 'ada@example.com', password: 'password123', captchaText: 'QZWL' }
 const firstCaptcha: Captcha = { key: 'captcha-1', image: 'data:image/png;base64,first' }
 const secondCaptcha: Captcha = { key: 'captcha-2', image: 'data:image/png;base64,second' }

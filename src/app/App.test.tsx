@@ -8,7 +8,10 @@ import { makeSignIn } from '@/features/auth/application/sign-in'
 import { makeVerifyOneTimeCode } from '@/features/auth/application/verify-one-time-code'
 import { InMemoryAuthenticator } from '@/features/auth/infrastructure/in-memory-authenticator'
 import { WebStorageSessionStore } from '@/features/auth/infrastructure/web-storage-session-store'
+<<<<<<< HEAD
+=======
 import { aSession } from '@/features/auth/testing/session-fixtures'
+>>>>>>> development
 import { WebStorageThemePreferenceStore } from '@/features/theme/infrastructure/web-storage-theme-preference-store'
 import { makeChangeUsersStatus } from '@/features/users/application/change-users-status'
 import { makeCreateUser } from '@/features/users/application/create-user'
@@ -20,7 +23,11 @@ import { InMemoryUserDirectory } from '@/features/users/infrastructure/in-memory
 import { WebStorageLocalePreferenceStore } from '@/shared/i18n/web-storage-locale-preference-store'
 import { App } from './App'
 
+<<<<<<< HEAD
+const account = { email: 'ada@example.com', password: 'password123', oneTimeCode: '123456' }
+=======
 const account = { name: 'Ada Lovelace', email: 'ada@example.com', password: 'password123', oneTimeCode: '123456' }
+>>>>>>> development
 const captcha = { key: 'captcha-1', image: 'data:image/png;base64,AAAA' }
 
 function CurrentPath() {
@@ -32,7 +39,11 @@ function renderApp({ at = '/', signedInAs }: { at?: string; signedInAs?: string 
   const authenticator = new InMemoryAuthenticator({ account })
   const sessionStore = new WebStorageSessionStore(window.localStorage)
   const userDirectory = new InMemoryUserDirectory({ users: demoUsers, groups: demoUserGroups })
+<<<<<<< HEAD
+  if (signedInAs) sessionStore.save({ email: signedInAs, accessToken: 'remembered-access-token' })
+=======
   if (signedInAs) sessionStore.save(aSession({ email: signedInAs }))
+>>>>>>> development
 
   render(
     <MemoryRouter initialEntries={[at]}>
@@ -104,7 +115,11 @@ describe('App', () => {
     expect(await screen.findByRole('heading', { name: 'Gösterge Paneli' })).toBeInTheDocument()
     expect(currentPath()).toHaveTextContent(/^\/$/)
     expect(within(screen.getByRole('banner')).getByText(account.email)).toBeInTheDocument()
+<<<<<<< HEAD
+    expect(sessionStore.load()).toEqual({ email: account.email, accessToken: expect.any(String) })
+=======
     expect(sessionStore.load()?.user.email).toBe(account.email)
+>>>>>>> development
 
     await user.click(screen.getByRole('button', { name: 'Çıkış yap' }))
     expect(currentPath()).toHaveTextContent('/auth/login')
