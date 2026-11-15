@@ -1,6 +1,6 @@
 # pf-demo
 
-Vite + React 19 + TypeScript + Tailwind CSS v4 + shadcn/ui + React Hook Form, tested with Vitest and Testing Library.
+Vite + React 19 + TypeScript + Tailwind CSS v4 + shadcn/ui + React Router + React Hook Form, tested with Vitest and Testing Library.
 
 ## Scripts
 
@@ -21,9 +21,15 @@ dependencies point **inward only**:
 
 ```
 src/
-├── main.tsx                      # Composition root: picks adapters, injects them
+├── main.tsx                      # Composition root: picks adapters and the router, injects them
 ├── index.css                     # Tailwind entry + global design tokens (light/dark)
-├── app/App.tsx                   # Page shell; receives use cases as props
+├── app/
+│   ├── App.tsx                   # Routes and who may see them; receives use cases as props
+│   ├── paths.ts                  # Every URL the app answers to
+│   ├── routing/                  # Route guards (RequireSession, RedirectIfSignedIn)
+│   ├── layouts/                  # Page frames (DashboardLayout: header + sign out)
+│   ├── pages/                    # Pages that compose features (SignInPage)
+│   └── components/               # App-specific pieces (BrandMark)
 ├── shared/
 │   ├── lib/utils.ts              # cn(): class merging used by every component
 │   ├── ui/                       # shadcn/ui primitives (button, input, card…), owned by us
@@ -39,6 +45,25 @@ src/
 `ui → application → domain` and `infrastructure → application → domain`.
 `oxlint` fails the build if `domain/` or `application/` import React, React Hook
 Form, or an outer layer (see `overrides` in `.oxlintrc.json`).
+
+### Routing and session
+
+React Router lives only in `app/` and `main.tsx`; features don't know about URLs.
+
+| Path          | Who may see it | Otherwise                         |
+| ------------- | -------------- | --------------------------------- |
+| `/auth/login` | Signed out     | Signed-in people are sent to `/`  |
+| `/`           | Signed in      | Signed-out people go to `/auth/login` |
+| anything else | —              | Sent to `/`, then guarded as above |
+
+- `SessionProvider` (`features/auth/ui`) holds who is signed in and exposes
+  `useSession()` → `{ session, startSession, endSession }`. It remembers the
+  session through the `SessionStore` port; `WebStorageSessionStore` backs it
+  with `localStorage` in `main.tsx`.
+- Guards only read the session. Signing in or out changes the session and the
+  guards redirect, so pages never navigate by hand.
+- `App` expects to be rendered inside a router: `BrowserRouter` in `main.tsx`,
+  `MemoryRouter` with `initialEntries` in tests.
 
 ### UI kit and design tokens
 
