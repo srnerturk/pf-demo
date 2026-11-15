@@ -1,0 +1,42 @@
+{
+  "$schema": "./node_modules/oxlint/configuration_schema.json",
+  "plugins": ["react", "typescript", "oxc", "import", "jsx-a11y", "vitest"],
+  "rules": {
+    "react/rules-of-hooks": "error",
+    "react/only-export-components": ["warn", { "allowConstantExport": true }]
+  },
+  "overrides": [
+    {
+      "files": ["src/**/domain/**"],
+      "rules": {
+        "no-restricted-imports": [
+          "error",
+          {
+            "patterns": [
+              {
+                "group": ["react", "react-*", "react-hook-form", "**/application/**", "**/infrastructure/**", "**/ui/**", "@/app/**", "@/shared/**"],
+                "message": "Dependency rule: the domain imports no framework and no outer layer."
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "files": ["src/**/application/**"],
+      "rules": {
+        "no-restricted-imports": [
+          "error",
+          {
+            "patterns": [
+              {
+                "group": ["react", "react-*", "react-hook-form", "**/infrastructure/**", "**/ui/**", "@/app/**", "@/shared/ui/**"],
+                "message": "Dependency rule: use cases depend only on the domain and their own ports."
+              }
+            ]
+          }
+        ]
+      }
+    }
+  ]
+}
