@@ -77,11 +77,7 @@ export function DashboardLayout({ menu }: DashboardLayoutProps) {
             </Button>
             <div className="ml-auto flex min-w-0 items-center gap-2 sm:gap-3">
               {session && (
-<<<<<<< HEAD
-                <span className="hidden truncate text-sm text-muted-foreground sm:inline">{session.email}</span>
-=======
                 <span className="hidden truncate text-sm text-muted-foreground sm:inline">{session.user.email}</span>
->>>>>>> development
               )}
               <LocaleSwitcher />
               <ThemeToggle />

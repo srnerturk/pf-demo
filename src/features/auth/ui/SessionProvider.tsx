@@ -1,24 +1,10 @@
-<<<<<<< HEAD
-import { useMemo, useState, type ReactNode } from 'react'
-import type { SessionStore } from '../application/session-store'
-import type { Session } from '../domain/authentication'
-=======
 import { useEffect, useMemo, useState, type ReactNode } from 'react'
 import type { SessionStore } from '../application/session-store'
 import { hasExpired, type Session } from '../domain/authentication'
->>>>>>> development
 import { SessionContext, type SessionContextValue } from './session-context'
 
 interface SessionProviderProps {
   store: SessionStore
-<<<<<<< HEAD
-  children: ReactNode
-}
-
-/** Holds who is signed in for the whole app, remembering it through the store. */
-export function SessionProvider({ store, children }: SessionProviderProps) {
-  const [session, setSession] = useState<Session | null>(() => store.load())
-=======
   /** The current time in milliseconds since the epoch; tests pass a fixed clock. */
   now?: () => number
   children: ReactNode
@@ -46,7 +32,6 @@ export function SessionProvider({ store, now = Date.now, children }: SessionProv
     }, session.tokens.expiresAt - now())
     return () => clearTimeout(timer)
   }, [session, store, now])
->>>>>>> development
 
   const value = useMemo<SessionContextValue>(
     () => ({

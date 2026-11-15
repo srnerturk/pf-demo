@@ -6,11 +6,7 @@ interface RecordedRequest {
   url: string
   method: string
   accept: string | null
-<<<<<<< HEAD
   authorization: string | null
-=======
-  credentials?: RequestCredentials
->>>>>>> development
 }
 
 /** Stands in for the network: records each request and answers with the given response. */
@@ -21,11 +17,7 @@ function fakeFetch(respond: () => Response) {
       url: String(input),
       method: init?.method ?? 'GET',
       accept: new Headers(init?.headers).get('Accept'),
-<<<<<<< HEAD
       authorization: new Headers(init?.headers).get('Authorization'),
-=======
-      credentials: init?.credentials,
->>>>>>> development
     })
     return respond()
   }
@@ -35,7 +27,6 @@ function fakeFetch(respond: () => Response) {
 const json = (body: unknown, status = 200) =>
   new Response(JSON.stringify(body), { status, headers: { 'Content-Type': 'application/json' } })
 
-<<<<<<< HEAD
 const ACCESS_TOKEN = 'eyJhbGciOiJIUzI1NiJ9.signed-in'
 
 function makeDirectory(
@@ -43,10 +34,6 @@ function makeDirectory(
   { baseUrl = 'https://admin.example.com', accessToken = (): string | null => ACCESS_TOKEN } = {},
 ) {
   return new HttpUserDirectory({ baseUrl, fetch, accessToken })
-=======
-function makeDirectory(fetch: typeof globalThis.fetch, baseUrl = 'https://admin.example.com') {
-  return new HttpUserDirectory({ baseUrl, fetch })
->>>>>>> development
 }
 
 const activeUser = {
@@ -93,11 +80,7 @@ function usersBody(users: unknown[], total = users.length) {
 
 describe('HTTP user directory', () => {
   describe('finding users', () => {
-<<<<<<< HEAD
     it('asks the users endpoint for one page on behalf of the signed-in person', async () => {
-=======
-    it('asks the users endpoint for one page, sending the session cookie', async () => {
->>>>>>> development
       const { fetch, requests } = fakeFetch(() => json(usersBody([])))
 
       await makeDirectory(fetch).find({ ...DEFAULT_USER_QUERY, page: 3, pageSize: 25 })
@@ -107,16 +90,11 @@ describe('HTTP user directory', () => {
           url: 'https://admin.example.com/users?page=3&per_page=25&page_limit=25',
           method: 'GET',
           accept: 'application/json',
-<<<<<<< HEAD
           authorization: `Bearer ${ACCESS_TOKEN}`,
-=======
-          credentials: 'include',
->>>>>>> development
         },
       ])
     })
 
-<<<<<<< HEAD
     it('asks without credentials when nobody is signed in, leaving the refusal to the service', async () => {
       const { fetch, requests } = fakeFetch(() => json(usersBody([])))
 
@@ -129,12 +107,6 @@ describe('HTTP user directory', () => {
       const { fetch, requests } = fakeFetch(() => json(usersBody([])))
 
       await makeDirectory(fetch, { baseUrl: 'https://admin.example.com/' }).find({ ...DEFAULT_USER_QUERY, search: 'cem köylü' })
-=======
-    it('passes the search along when there is one', async () => {
-      const { fetch, requests } = fakeFetch(() => json(usersBody([])))
-
-      await makeDirectory(fetch, 'https://admin.example.com/').find({ ...DEFAULT_USER_QUERY, search: 'cem köylü' })
->>>>>>> development
 
       expect(requests[0].url).toBe('https://admin.example.com/users?page=1&per_page=10&page_limit=10&s=cem+k%C3%B6yl%C3%BC')
     })
