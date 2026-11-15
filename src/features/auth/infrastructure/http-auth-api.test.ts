@@ -33,8 +33,10 @@ const json = (body: unknown, status = 200) =>
 
 const DEVICE_ID = '1adad3ef-bea8-40a3-8a64-11188e16fece'
 
+const NOW = Date.UTC(2026, 10, 15, 12, 0, 0)
+
 function makeApi(fetch: typeof globalThis.fetch, baseUrl = 'https://auth.example.com') {
-  return new HttpAuthApi({ baseUrl, fetch, deviceId: () => DEVICE_ID })
+  return new HttpAuthApi({ baseUrl, fetch, deviceId: () => DEVICE_ID, now: () => NOW })
 }
 
 const captchaBody = { captcha_key: '4b8730977b9f4bed9fe43419fb26a839', image: 'data:image/png;base64,iVBORw0KGgo=' }
@@ -117,7 +119,7 @@ describe('HTTP auth API', () => {
 
       const challenge = await makeApi(fetch).verifyCredentials(attempt)
 
-      expect(challenge).toEqual({ id: '2763', email: 'ada@example.com', revealedCode: '949661' })
+      expect(challenge).toEqual({ id: '2763', email: 'ada@example.com', remember: true, revealedCode: '949661' })
     })
 
     it('keeps the code hidden when the service does not hand it back', async () => {
@@ -126,7 +128,7 @@ describe('HTTP auth API', () => {
 
       const challenge = await makeApi(fetch).verifyCredentials(attempt)
 
-      expect(challenge).toEqual({ id: '2763', email: 'ada@example.com' })
+      expect(challenge).toEqual({ id: '2763', email: 'ada@example.com', remember: true })
     })
 
     it('reports wrong credentials when the service answers 401', async () => {
@@ -155,14 +157,25 @@ describe('HTTP auth API', () => {
   })
 
   describe('verifying a one-time code', () => {
-    const challenge: SignInChallenge = { id: '2763', email: 'ada@example.com' }
+    const challenge: SignInChallenge = { id: '2763', email: 'ada@example.com', remember: true }
 
-    it('posts the code for the challenged user, with cookies, and opens a session', async () => {
-      const { fetch, requests } = fakeFetch(() => json({ success: true }))
+    /** What the service answers once the code is right (trimmed to what matters here). */
+    const verifiedBody = {
+      success: true,
+      redirect_url: '/home',
+      access_token: 'eyJ.access.token',
+      refresh_token: 'refresh-token',
+      expires_in: 3599,
+      session_time: 15,
+      last_failed_login_message: null,
+      user: { id: 2763, first_name: 'Ada', last_name: 'Lovelace', name: 'Ada Lovelace', email: 'ada@example.com' },
+    }
 
-      const session = await makeApi(fetch).verifyCode(challenge, '535744')
+    it('posts the code for the challenged user, with cookies', async () => {
+      const { fetch, requests } = fakeFetch(() => json(verifiedBody))
 
-      expect(session).toEqual({ email: 'ada@example.com' })
+      await makeApi(fetch).verifyCode(challenge, '535744')
+
       expect(requests).toEqual([
         {
           url: 'https://auth.example.com/auth/otp/verify',
@@ -172,6 +185,24 @@ describe('HTTP auth API', () => {
           body: { client_type: 'admin', otp: '535744', user_id: 2763 },
         },
       ])
+    })
+
+    it('opens a session for the user with their tokens, expiring when the access token does', async () => {
+      const { fetch } = fakeFetch(() => json(verifiedBody))
+
+      const session = await makeApi(fetch).verifyCode(challenge, '535744')
+
+      expect(session).toEqual({
+        user: { id: '2763', name: 'Ada Lovelace', email: 'ada@example.com' },
+        tokens: { accessToken: 'eyJ.access.token', refreshToken: 'refresh-token', expiresAt: NOW + 3599 * 1000 },
+        remember: true,
+      })
+    })
+
+    it('fails when the answer carries no tokens', async () => {
+      const { fetch } = fakeFetch(() => json({ success: true, user: verifiedBody.user }))
+
+      await expect(makeApi(fetch).verifyCode(challenge, '535744')).rejects.toThrow('session')
     })
 
     it.each([400, 401, 422])('reports a wrong or expired code when the service answers %i', async (status) => {

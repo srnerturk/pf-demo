@@ -17,7 +17,7 @@ export class WebStorageSessionStore implements SessionStore {
 
     try {
       const parsed: unknown = JSON.parse(stored)
-      return isSession(parsed) ? { email: parsed.email } : null
+      return isSession(parsed) ? parsed : null
     } catch {
       return null
     }
@@ -32,6 +32,22 @@ export class WebStorageSessionStore implements SessionStore {
   }
 }
 
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === 'object' && value !== null
+}
+
+/** Checks the whole shape: what is stored may predate the current Session, or have been edited by hand. */
 function isSession(value: unknown): value is Session {
-  return typeof value === 'object' && value !== null && typeof (value as Session).email === 'string'
+  if (!isRecord(value) || typeof value.remember !== 'boolean') return false
+  const { user, tokens } = value
+  return (
+    isRecord(user) &&
+    typeof user.id === 'string' &&
+    typeof user.name === 'string' &&
+    typeof user.email === 'string' &&
+    isRecord(tokens) &&
+    typeof tokens.accessToken === 'string' &&
+    typeof tokens.refreshToken === 'string' &&
+    typeof tokens.expiresAt === 'number'
+  )
 }

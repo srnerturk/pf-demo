@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import type { Session, SignInChallenge } from '../domain/authentication'
+import { aSession } from '../testing/session-fixtures'
 import {
   InvalidOneTimeCodeInputError,
   makeVerifyOneTimeCode,
@@ -10,20 +11,21 @@ class RecordingVerifier implements OneTimeCodeVerifier {
   readonly received: { challenge: SignInChallenge; code: string }[] = []
   async verifyCode(challenge: SignInChallenge, code: string): Promise<Session> {
     this.received.push({ challenge, code })
-    return { email: 'ada@example.com' }
+    return session
   }
 }
 
-const challenge: SignInChallenge = { id: 'challenge-1', email: 'ada@example.com' }
+const challenge: SignInChallenge = { id: 'challenge-1', email: 'ada@example.com', remember: false }
+const session = aSession()
 
 describe('verify one-time code', () => {
   it('answers the challenge with the code and returns the session', async () => {
     const verifier = new RecordingVerifier()
     const verifyOneTimeCode = makeVerifyOneTimeCode(verifier)
 
-    const session = await verifyOneTimeCode(challenge, '123456')
+    const opened = await verifyOneTimeCode(challenge, '123456')
 
-    expect(session).toEqual({ email: 'ada@example.com' })
+    expect(opened).toBe(session)
     expect(verifier.received).toEqual([{ challenge, code: '123456' }])
   })
 

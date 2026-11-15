@@ -10,7 +10,7 @@ describe('resend one-time code', () => {
       },
     }
 
-    await makeResendOneTimeCode(sender)({ id: 'challenge-1', email: 'ada@example.com' })
+    await makeResendOneTimeCode(sender)({ id: 'challenge-1', email: 'ada@example.com', remember: false })
 
     expect(resent).toEqual(['challenge-1'])
   })

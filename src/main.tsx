@@ -8,6 +8,7 @@ import { makeSignIn } from '@/features/auth/application/sign-in'
 import { makeVerifyOneTimeCode } from '@/features/auth/application/verify-one-time-code'
 import { HttpAuthApi } from '@/features/auth/infrastructure/http-auth-api'
 import { InMemoryAuthenticator, type InMemoryAccount } from '@/features/auth/infrastructure/in-memory-authenticator'
+import { RememberMeSessionStore } from '@/features/auth/infrastructure/remember-me-session-store'
 import { WebStorageDeviceId } from '@/features/auth/infrastructure/web-storage-device-id'
 import { WebStorageSessionStore } from '@/features/auth/infrastructure/web-storage-session-store'
 import { makeChangeUsersStatus } from '@/features/users/application/change-users-status'
@@ -28,12 +29,17 @@ const authApi = new HttpAuthApi({
   baseUrl: import.meta.env.VITE_AUTH_API_BASE_URL ?? 'https://pf-auth-uat.halkode.com.tr',
   fetch: window.fetch,
   deviceId: () => deviceId.current(),
+  now: Date.now,
 })
 // Resending a one-time code still goes through the in-memory authenticator until HttpAuthApi
 // speaks that endpoint: it only pretends to resend.
-const demoAccount: InMemoryAccount = { email: 'demo@example.com', password: 'password123', oneTimeCode: '123456' }
+const demoAccount: InMemoryAccount = { name: 'Demo User', email: 'demo@example.com', password: 'password123', oneTimeCode: '123456' }
 const authenticator = new InMemoryAuthenticator({ account: demoAccount, latencyMs: 700 })
-const sessionStore = new WebStorageSessionStore(window.localStorage)
+// A session outlives the visit (localStorage) only when the person ticked "Remember me".
+const sessionStore = new RememberMeSessionStore({
+  acrossVisits: new WebStorageSessionStore(window.localStorage),
+  thisVisitOnly: new WebStorageSessionStore(window.sessionStorage),
+})
 const themePreferenceStore = new WebStorageThemePreferenceStore(window.localStorage)
 const systemPrefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches
 const localePreferenceStore = new WebStorageLocalePreferenceStore(window.localStorage)
