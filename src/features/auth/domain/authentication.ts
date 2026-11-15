@@ -21,4 +21,6 @@ export interface SignInChallenge {
 /** A completed sign-in. */
 export interface Session {
   email: string
+  /** Proves to the PF services who is asking; opaque to this app. */
+  accessToken: string
 }

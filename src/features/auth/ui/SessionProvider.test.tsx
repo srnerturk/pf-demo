@@ -31,7 +31,7 @@ function SessionProbe() {
   return (
     <>
       <p>{session ? `Signed in as ${session.email}` : 'Signed out'}</p>
-      <button type="button" onClick={() => startSession({ email: 'ada@example.com' })}>
+      <button type="button" onClick={() => startSession({ email: 'ada@example.com', accessToken: 'token' })}>
         Start
       </button>
       <button type="button" onClick={endSession}>
@@ -53,7 +53,7 @@ function renderWithStore(store: SessionStore) {
 
 describe('SessionProvider', () => {
   it('restores the session remembered by the store', () => {
-    renderWithStore(new FakeSessionStore({ email: 'ada@example.com' }))
+    renderWithStore(new FakeSessionStore({ email: 'ada@example.com', accessToken: 'token' }))
 
     expect(screen.getByText('Signed in as ada@example.com')).toBeInTheDocument()
   })
@@ -66,11 +66,11 @@ describe('SessionProvider', () => {
     await user.click(screen.getByRole('button', { name: 'Start' }))
 
     expect(screen.getByText('Signed in as ada@example.com')).toBeInTheDocument()
-    expect(store.stored).toEqual({ email: 'ada@example.com' })
+    expect(store.stored).toEqual({ email: 'ada@example.com', accessToken: 'token' })
   })
 
   it('ends the session and forgets it', async () => {
-    const store = new FakeSessionStore({ email: 'ada@example.com' })
+    const store = new FakeSessionStore({ email: 'ada@example.com', accessToken: 'token' })
     const { user } = renderWithStore(store)
 
     await user.click(screen.getByRole('button', { name: 'End' }))

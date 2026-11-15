@@ -157,12 +157,22 @@ describe('HTTP auth API', () => {
   describe('verifying a one-time code', () => {
     const challenge: SignInChallenge = { id: '2763', email: 'ada@example.com' }
 
-    it('posts the code for the challenged user, with cookies, and opens a session', async () => {
-      const { fetch, requests } = fakeFetch(() => json({ success: true }))
+    /** What the service answers when the code is right, trimmed to what matters here. */
+    const verifiedBody = {
+      success: true,
+      access_token: 'header.payload.signature',
+      expires_in: 3599,
+      refresh_token: 'opaque-refresh-token',
+      redirect_url: '/home',
+      user: { id: 2763, email: 'ada@example.com' },
+    }
+
+    it('posts the code for the challenged user, with cookies, and opens a session with the access token', async () => {
+      const { fetch, requests } = fakeFetch(() => json(verifiedBody))
 
       const session = await makeApi(fetch).verifyCode(challenge, '535744')
 
-      expect(session).toEqual({ email: 'ada@example.com' })
+      expect(session).toEqual({ email: 'ada@example.com', accessToken: 'header.payload.signature' })
       expect(requests).toEqual([
         {
           url: 'https://auth.example.com/auth/otp/verify',
@@ -184,6 +194,12 @@ describe('HTTP auth API', () => {
       const { fetch } = fakeFetch(() => json({ error: 'boom' }, 500))
 
       await expect(makeApi(fetch).verifyCode(challenge, '535744')).rejects.toThrow('500')
+    })
+
+    it('fails when the service accepts the code but hands back no access token', async () => {
+      const { fetch } = fakeFetch(() => json({ success: true }))
+
+      await expect(makeApi(fetch).verifyCode(challenge, '535744')).rejects.toThrow('access token')
     })
   })
 })

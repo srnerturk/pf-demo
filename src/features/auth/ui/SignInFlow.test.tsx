@@ -15,7 +15,7 @@ function renderFlow() {
     <SignInFlow
       signIn={vi.fn<SignIn>().mockResolvedValue({ id: 'challenge-1', email: 'ada@example.com' })}
       requestCaptcha={vi.fn<RequestCaptcha>().mockResolvedValue({ key: 'captcha-1', image: 'data:image/png;base64,AAAA' })}
-      verifyOneTimeCode={vi.fn<VerifyOneTimeCode>().mockResolvedValue({ email: 'ada@example.com' })}
+      verifyOneTimeCode={vi.fn<VerifyOneTimeCode>().mockResolvedValue({ email: 'ada@example.com', accessToken: 'token' })}
       resendOneTimeCode={vi.fn<ResendOneTimeCode>().mockResolvedValue(undefined)}
       onSignedIn={onSignedIn}
     />,
@@ -48,7 +48,7 @@ describe('SignInFlow', () => {
     await user.keyboard('123456')
     await user.click(screen.getByRole('button', { name: 'Verify' }))
 
-    await waitFor(() => expect(onSignedIn).toHaveBeenCalledWith({ email: 'ada@example.com' }))
+    await waitFor(() => expect(onSignedIn).toHaveBeenCalledWith({ email: 'ada@example.com', accessToken: 'token' }))
   })
 
   it('goes back to the sign-in screen to use a different email', async () => {

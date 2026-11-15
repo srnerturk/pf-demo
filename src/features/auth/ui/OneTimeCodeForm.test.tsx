@@ -7,7 +7,7 @@ import type { Session, SignInChallenge } from '../domain/authentication'
 import { OneTimeCodeForm } from './OneTimeCodeForm'
 
 const challenge: SignInChallenge = { id: 'challenge-1', email: 'ada@example.com' }
-const session: Session = { email: 'ada@example.com' }
+const session: Session = { email: 'ada@example.com', accessToken: 'token' }
 
 interface Overrides {
   challenge?: SignInChallenge

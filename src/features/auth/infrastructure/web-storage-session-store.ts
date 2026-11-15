@@ -17,7 +17,7 @@ export class WebStorageSessionStore implements SessionStore {
 
     try {
       const parsed: unknown = JSON.parse(stored)
-      return isSession(parsed) ? { email: parsed.email } : null
+      return isSession(parsed) ? { email: parsed.email, accessToken: parsed.accessToken } : null
     } catch {
       return null
     }
@@ -32,6 +32,9 @@ export class WebStorageSessionStore implements SessionStore {
   }
 }
 
+/** Sessions saved before access tokens existed don't qualify: their owner signs in again. */
 function isSession(value: unknown): value is Session {
-  return typeof value === 'object' && value !== null && typeof (value as Session).email === 'string'
+  if (typeof value !== 'object' || value === null) return false
+  const { email, accessToken } = value as Record<string, unknown>
+  return typeof email === 'string' && typeof accessToken === 'string'
 }

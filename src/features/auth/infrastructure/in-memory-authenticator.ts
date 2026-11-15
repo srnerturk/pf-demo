@@ -45,7 +45,7 @@ export class InMemoryAuthenticator implements CredentialVerifier, OneTimeCodeVer
     if (!challenge || code !== this.account.oneTimeCode) throw new OneTimeCodeRejectedError()
 
     this.openChallenges.delete(id)
-    return { email: challenge.email }
+    return { email: challenge.email, accessToken: `in-memory-access-token-${id}` }
   }
 
   async resendCode(challengeId: string): Promise<void> {

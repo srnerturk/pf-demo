@@ -31,7 +31,7 @@ function renderApp({ at = '/', signedInAs }: { at?: string; signedInAs?: string 
   const authenticator = new InMemoryAuthenticator({ account })
   const sessionStore = new WebStorageSessionStore(window.localStorage)
   const userDirectory = new InMemoryUserDirectory({ users: demoUsers, groups: demoUserGroups })
-  if (signedInAs) sessionStore.save({ email: signedInAs })
+  if (signedInAs) sessionStore.save({ email: signedInAs, accessToken: 'remembered-access-token' })
 
   render(
     <MemoryRouter initialEntries={[at]}>
@@ -103,7 +103,7 @@ describe('App', () => {
     expect(await screen.findByRole('heading', { name: 'Gösterge Paneli' })).toBeInTheDocument()
     expect(currentPath()).toHaveTextContent(/^\/$/)
     expect(within(screen.getByRole('banner')).getByText(account.email)).toBeInTheDocument()
-    expect(sessionStore.load()).toEqual({ email: account.email })
+    expect(sessionStore.load()).toEqual({ email: account.email, accessToken: expect.any(String) })
 
     await user.click(screen.getByRole('button', { name: 'Çıkış yap' }))
     expect(currentPath()).toHaveTextContent('/auth/login')

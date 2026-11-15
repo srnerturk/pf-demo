@@ -88,8 +88,11 @@ The PF auth service lives at `VITE_AUTH_API_BASE_URL` (default `https://pf-auth-
 
   A `200` without `otp_required` isn't supported yet and shows as a general failure.
 - **One-time code** — `POST /auth/otp/verify` (with cookies) sends `{ client_type: "admin", otp, user_id }`.
-  `400`/`401`/`422 { error }` (wrong or expired code) becomes `OneTimeCodeRejectedError`; any other
-  success opens the session. When login hands back `otp_code` (UAT does), the code screen opens
+  `400`/`401`/`422 { error }` (wrong or expired code) becomes `OneTimeCodeRejectedError`. A `200`
+  opens the session with its `access_token` (`Session { email, accessToken }`); a `200` without one
+  fails. `refresh_token` and `expires_in` aren't used yet: after the token expires (about an hour),
+  the PF services answer 401 until the person signs in again. Sessions saved before access tokens
+  existed are ignored, so their owners sign in again. When login hands back `otp_code` (UAT does), the code screen opens
   with it filled in. Resending is not wired yet: `InMemoryAuthenticator` only pretends to resend.
 - **Device** — `WebStorageDeviceId` creates this browser's `device_id` once and keeps it in
   `localStorage` (key `pf-demo.device-id`); it falls back to one id per visit when storage is blocked.
@@ -173,7 +176,7 @@ the service cannot sort, so the columns don't offer to.
   (demo data in `demo-user-directory.ts`, 119 users) still backs creating users, changing status
   and user groups, so those changes don't show in the list yet.
 - **Listing** — `GET /users?page&per_page&page_limit[&s]` with `Authorization: Bearer {token}` (the
-  token comes from the injected `accessToken`; sign-in doesn't keep one yet, so the service answers 401) (`s` only when searching,
+  session's access token, read through the injected `accessToken`) (`s` only when searching,
   `page_limit` equals `per_page`) → `{ success: true, data: { users, total, … } }`. Each user becomes
   a `User`: `is_admin_verified` `1`/`2` → `active`/`passive`, `roles` (`"A, B"`) → `['A', 'B']`,
   `created_at`/`updated_at` (no offset) are read as local time. A non-2xx answer or a body that

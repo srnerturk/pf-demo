@@ -52,6 +52,7 @@ describe('in-memory authenticator', () => {
 
     await expect(authenticator.verifyCode(challenge, account.oneTimeCode)).resolves.toEqual({
       email: account.email,
+      accessToken: expect.any(String),
     })
   })
 

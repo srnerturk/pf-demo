@@ -46,6 +46,12 @@ interface OtpVerifyRequest {
   user_id: number
 }
 
+/** Wire format of a 200 from POST /auth/otp/verify. Only the fields this app reads. */
+interface OtpVerifiedResponse {
+  /** A JWT the PF services accept as `Authorization: Bearer …`. */
+  access_token: string
+}
+
 /** Statuses with which /auth/otp/verify turns down a wrong or expired code. */
 const CODE_REJECTED_STATUSES = new Set([400, 401, 422])
 
@@ -104,7 +110,10 @@ export class HttpAuthApi implements CaptchaIssuer, CredentialVerifier, OneTimeCo
 
     if (CODE_REJECTED_STATUSES.has(response.status)) throw new OneTimeCodeRejectedError()
     if (!response.ok) throw unexpectedStatus('POST /auth/otp/verify', response)
-    return { email: challenge.email }
+
+    const body: unknown = await response.json()
+    if (!isOtpVerifiedResponse(body)) throw new Error('The auth service accepted the code but sent no access token')
+    return { email: challenge.email, accessToken: body.access_token }
   }
 
   /** Sign-in steps share a cookie (set by login, read by verify), so they always send credentials. */
@@ -130,6 +139,11 @@ function isCaptchaResponse(body: unknown): body is CaptchaResponse {
   if (typeof body !== 'object' || body === null) return false
   const { captcha_key, image } = body as Record<string, unknown>
   return typeof captcha_key === 'string' && typeof image === 'string'
+}
+
+function isOtpVerifiedResponse(body: unknown): body is OtpVerifiedResponse {
+  if (typeof body !== 'object' || body === null) return false
+  return typeof (body as Record<string, unknown>).access_token === 'string'
 }
 
 function isOtpRequiredResponse(body: unknown): body is OtpRequiredResponse {

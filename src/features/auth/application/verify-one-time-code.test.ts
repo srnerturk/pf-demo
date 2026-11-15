@@ -10,7 +10,7 @@ class RecordingVerifier implements OneTimeCodeVerifier {
   readonly received: { challenge: SignInChallenge; code: string }[] = []
   async verifyCode(challenge: SignInChallenge, code: string): Promise<Session> {
     this.received.push({ challenge, code })
-    return { email: 'ada@example.com' }
+    return { email: 'ada@example.com', accessToken: 'token' }
   }
 }
 
@@ -23,7 +23,7 @@ describe('verify one-time code', () => {
 
     const session = await verifyOneTimeCode(challenge, '123456')
 
-    expect(session).toEqual({ email: 'ada@example.com' })
+    expect(session).toEqual({ email: 'ada@example.com', accessToken: 'token' })
     expect(verifier.received).toEqual([{ challenge, code: '123456' }])
   })
 
